@@ -8,6 +8,7 @@ extends CanvasLayer
 @onready var date_label: Label = $ClockPanel/VBox/DateLabel
 @onready var tool_label: Label = $ToolPanel/ToolLabel
 @onready var harvest_label: Label = $ToolPanel/HarvestLabel
+@onready var hotbar_ui: HotbarUI = $HotbarUI
 
 var _current_season: String = "Spring"
 var _current_day: int = 1
@@ -20,9 +21,13 @@ func _ready() -> void:
 	EventBus.crop_harvested.connect(_on_crop_harvested)
 	_update_display()
 
+func bind_inventory(mgr: InventoryManager) -> void:
+	if hotbar_ui != null:
+		hotbar_ui.bind_inventory(mgr)
+
 func update_active_tool(tool_name: String) -> void:
 	if tool_label != null:
-		tool_label.text = "Tool: " + tool_name
+		tool_label.text = "Active: " + tool_name
 
 func update_harvest_count(total_harvested: int) -> void:
 	if harvest_label != null:

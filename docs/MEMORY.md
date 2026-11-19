@@ -59,4 +59,10 @@ updated: 2026-11-19
   - Integrated `Player` with `LocationManager`: automatic cell detection, movement into door detection, dynamic `Camera2D` limit clipping (1280x1040 Farm vs 192x192 FarmHouse), and tool action restriction while indoors.
   - Guaranteed `FarmGrid` & `CropManager` state persistence: soil states and planted crops remain in memory while indoors, continue advancing overnight across `EventBus.day_started`, and seamlessly re-appear upon returning outside.
   - Verified with automated test suite `tests/test_warps.tscn` and full headless engine verification.
+- Isolated Inventory & Hotbar UI system implemented & verified:
+  - Built `InventorySlot` (`src/systems/inventory/inventory_slot.gd`) and `InventoryManager` (`src/systems/inventory/inventory_manager.gd`) handling slot storage, item stacking, addition/removal, and active slot selection.
+  - Decoupled `Player` from manual inventory tracking, delegating tool and seed actions to `InventoryManager` while maintaining backward-compatible fallbacks.
+  - Extended `ContentRegistry` with default tool definitions (`vanilla:hoe`, `vanilla:watering_can`, `vanilla:axe`, `vanilla:pickaxe`, `vanilla:scythe`) and cached `AtlasTexture` icon generation from extracted `TileSheets/tools.png` and `Maps/springobjects.png`.
+  - Built 12-slot bottom Hotbar HUD (`src/ui/hotbar_ui.gd`, `src/ui/hotbar_slot_ui.gd`) rendering real item icons, stack counts, golden selection highlight, number shortcuts (1-9, 0, -, =), and mouse wheel/click slot switching.
+  - Verified with automated test suite `tests/test_inventory.tscn` and full engine test suite.
 - Next immediate task: Expand audio pipeline for XACT wave banks (`XACT/*.xwb`) and sound bank (`Sound Bank.xsb`).

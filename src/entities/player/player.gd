@@ -17,6 +17,7 @@ const MOVE_SPEED: float = 110.0
 @export var crop_manager: CropManager = null
 @export var map_loader: MapLoader = null
 @export var location_manager: LocationManager = null
+@export var inventory_manager: InventoryManager = null
 @export var default_spawn_cell: Vector2i = Vector2i(64, 15)
 
 var active_tool: ToolType = ToolType.HOE
@@ -88,17 +89,28 @@ func _update_target_cell() -> void:
 		farm_grid.set_highlight_cell(target_cell)
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Tool selection via 1-4 keys
+	# Inventory slot selection
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
-		match event.keycode:
-			KEY_1:
-				_set_tool(ToolType.HOE)
-			KEY_2:
-				_set_tool(ToolType.WATERING_CAN)
-			KEY_3:
-				_set_tool(ToolType.PARSNIP_SEEDS)
-			KEY_4:
-				_set_tool(ToolType.HAND)
+		if inventory_manager != null:
+			match event.keycode:
+				KEY_1: inventory_manager.select_slot(0)
+				KEY_2: inventory_manager.select_slot(1)
+				KEY_3: inventory_manager.select_slot(2)
+				KEY_4: inventory_manager.select_slot(3)
+				KEY_5: inventory_manager.select_slot(4)
+				KEY_6: inventory_manager.select_slot(5)
+				KEY_7: inventory_manager.select_slot(6)
+				KEY_8: inventory_manager.select_slot(7)
+				KEY_9: inventory_manager.select_slot(8)
+				KEY_0: inventory_manager.select_slot(9)
+				KEY_MINUS: inventory_manager.select_slot(10)
+				KEY_EQUAL: inventory_manager.select_slot(11)
+		else:
+			match event.keycode:
+				KEY_1: _set_tool(ToolType.HOE)
+				KEY_2: _set_tool(ToolType.WATERING_CAN)
+				KEY_3: _set_tool(ToolType.PARSNIP_SEEDS)
+				KEY_4: _set_tool(ToolType.HAND)
 
 	# Action trigger via Space, Enter, or Mouse Click
 	if event.is_action_pressed(&"ui_accept") or (event is InputEventKey and event.is_pressed() and event.keycode == KEY_SPACE):
@@ -142,6 +154,16 @@ func _set_tool(tool_type: ToolType) -> void:
 	queue_redraw()
 
 func get_active_tool_name() -> String:
+	if inventory_manager != null:
+		var slot: InventorySlot = inventory_manager.get_selected_slot()
+		if slot == null or slot.is_empty():
+			return "Empty Hand"
+		var item_data: ItemData = slot.get_item_data()
+		var item_name: String = item_data.name if item_data != null else String(slot.item_id)
+		if slot.count > 1:
+			return "%s (%d)" % [item_name, slot.count]
+		return item_name
+
 	match active_tool:
 		ToolType.HOE:
 			return "Hoe"
@@ -161,7 +183,7 @@ func use_active_tool() -> bool:
 
 	var cell: Vector2i = target_cell
 
-	# Check for mature harvest first
+	# 1. Check for mature harvest first
 	if crop_manager != null and crop_manager.is_mature(cell):
 		var harvest_res: Dictionary = crop_manager.harvest_crop(cell)
 		if harvest_res.get("success", false):
@@ -171,6 +193,34 @@ func use_active_tool() -> bool:
 			print("[Player] Harvested: %s x%d! Total in bag: %d" % [item_id, count, harvest_bag[item_id]])
 			return true
 
+	# 2. Use item from inventory if available
+	if inventory_manager != null:
+		var slot: InventorySlot = inventory_manager.get_selected_slot()
+		if slot == null or slot.is_empty():
+			return false
+
+		var item_id: StringName = slot.item_id
+		if item_id == &"vanilla:hoe":
+			if farm_grid.till_soil(cell):
+				print("[Player] Tilled soil at %s" % str(cell))
+				return true
+		elif item_id == &"vanilla:watering_can":
+			if farm_grid.water_soil(cell):
+				print("[Player] Watered soil at %s" % str(cell))
+				return true
+		else:
+			# Check if selected item is a plantable crop seed
+			var seed_key: StringName = item_id
+			if String(seed_key).begins_with("vanilla:"):
+				seed_key = StringName(String(seed_key).substr(8))
+			if ContentRegistry.has_crop(seed_key) or ContentRegistry.has_crop(item_id):
+				if crop_manager != null and crop_manager.plant_seed(cell, seed_key):
+					inventory_manager.remove_item_at(inventory_manager.selected_slot_index, 1)
+					print("[Player] Planted %s at %s" % [item_id, str(cell)])
+					return true
+		return false
+
+	# 3. Fallback to legacy active_tool enum
 	match active_tool:
 		ToolType.HOE:
 			if farm_grid.till_soil(cell):
@@ -189,7 +239,6 @@ func use_active_tool() -> bool:
 				print("[Player] Planted Parsnip Seed at %s (Remaining: %d)" % [str(cell), parsnip_seeds_count])
 				return true
 		ToolType.HAND:
-			# If not mature, nothing to harvest
 			pass
 
 	return false

@@ -9,6 +9,9 @@ const DEFAULT_NAMESPACE: String = "vanilla"
 
 var _items: Dictionary[StringName, ItemData] = {}
 var _crops: Dictionary[StringName, CropData] = {}
+var _springobjects_texture: Texture2D = null
+var _tools_texture: Texture2D = null
+var _icon_cache: Dictionary[StringName, AtlasTexture] = {}
 
 func _ready() -> void:
 	load_vanilla_data()
@@ -46,6 +49,50 @@ func get_all_items() -> Array[ItemData]:
 	for item: ItemData in _items.values():
 		result.append(item)
 	return result
+
+func get_springobjects_texture() -> Texture2D:
+	if _springobjects_texture == null:
+		var path: String = VANILLA_DATA_DIR.path_join("Maps/springobjects.png")
+		if FileAccess.file_exists(path):
+			var abs_path: String = ProjectSettings.globalize_path(path)
+			var img: Image = Image.load_from_file(abs_path)
+			if img != null and not img.is_empty():
+				_springobjects_texture = ImageTexture.create_from_image(img)
+	return _springobjects_texture
+
+func get_tools_texture() -> Texture2D:
+	if _tools_texture == null:
+		var path: String = VANILLA_DATA_DIR.path_join("TileSheets/tools.png")
+		if FileAccess.file_exists(path):
+			var abs_path: String = ProjectSettings.globalize_path(path)
+			var img: Image = Image.load_from_file(abs_path)
+			if img != null and not img.is_empty():
+				_tools_texture = ImageTexture.create_from_image(img)
+	return _tools_texture
+
+func get_item_icon(id: StringName) -> AtlasTexture:
+	var namespaced_id: StringName = ensure_namespaced(id)
+	if _icon_cache.has(namespaced_id):
+		return _icon_cache[namespaced_id]
+
+	var item: ItemData = get_item(namespaced_id)
+	if item == null:
+		return null
+
+	var is_tool: bool = item.category == ItemData.Category.TOOL or item.texture_path.contains("tools")
+	var base_tex: Texture2D = get_tools_texture() if is_tool else get_springobjects_texture()
+	if base_tex == null:
+		return null
+
+	var cols: int = 21 if is_tool else 24
+	var idx: int = item.sprite_index if item.sprite_index >= 0 else 0
+	var atlas: AtlasTexture = AtlasTexture.new()
+	atlas.atlas = base_tex
+	atlas.region = Rect2((idx % cols) * 16, (idx / cols) * 16, 16, 16)
+	atlas.filter_clip = true
+
+	_icon_cache[namespaced_id] = atlas
+	return atlas
 
 # --- Crop Registry ---
 
@@ -109,8 +156,63 @@ func load_vanilla_data() -> void:
 	if FileAccess.file_exists(crops_json_path):
 		loaded_crops = load_crops_from_json_file(crops_json_path)
 
-	print("[ContentRegistry] Ingestion complete. Items: %d, Crops: %d." % [loaded_items, loaded_crops])
-	EventBus.content_loading_finished.emit(loaded_items, loaded_crops)
+	# Ensure default tools are registered with authentic sprite indices
+	register_default_tools()
+
+	print("[ContentRegistry] Ingestion complete. Items: %d, Crops: %d." % [_items.size(), loaded_crops])
+	EventBus.content_loading_finished.emit(_items.size(), loaded_crops)
+
+func register_default_tools() -> void:
+	var tools_def: Array[Dictionary] = [
+		{
+			"id": "hoe",
+			"name": "Hoe",
+			"description": "Used to till dirt.",
+			"category": int(ItemData.Category.TOOL),
+			"texture_path": "TileSheets/tools.png",
+			"sprite_index": 21,
+			"max_stack": 1,
+		},
+		{
+			"id": "watering_can",
+			"name": "Watering Can",
+			"description": "Used to water crops.",
+			"category": int(ItemData.Category.TOOL),
+			"texture_path": "TileSheets/tools.png",
+			"sprite_index": 273,
+			"max_stack": 1,
+		},
+		{
+			"id": "axe",
+			"name": "Axe",
+			"description": "Used to chop wood.",
+			"category": int(ItemData.Category.TOOL),
+			"texture_path": "TileSheets/tools.png",
+			"sprite_index": 189,
+			"max_stack": 1,
+		},
+		{
+			"id": "pickaxe",
+			"name": "Pickaxe",
+			"description": "Used to break stones.",
+			"category": int(ItemData.Category.TOOL),
+			"texture_path": "TileSheets/tools.png",
+			"sprite_index": 105,
+			"max_stack": 1,
+		},
+		{
+			"id": "scythe",
+			"name": "Scythe",
+			"description": "Used to cut grass and harvest crops.",
+			"category": int(ItemData.Category.TOOL),
+			"texture_path": "TileSheets/tools.png",
+			"sprite_index": 47,
+			"max_stack": 1,
+		},
+	]
+	for d: Dictionary in tools_def:
+		var item: ItemData = ItemData.from_dict(d)
+		register_item(item.id, item)
 
 func load_items_from_json_file(file_path: String) -> int:
 	var file: FileAccess = FileAccess.open(file_path, FileAccess.ModeFlags.READ)
