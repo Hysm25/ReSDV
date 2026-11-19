@@ -32,6 +32,14 @@ static func is_vanilla_data_ready() -> bool:
 		VANILLA_DATA_DIR.path_join("audio/doorClose.wav"),
 		VANILLA_DATA_DIR.path_join("audio/seeds.wav"),
 		VANILLA_DATA_DIR.path_join("audio/harvest.wav"),
+		VANILLA_DATA_DIR.path_join("Characters/Robin.png"),
+		VANILLA_DATA_DIR.path_join("Portraits/Robin.png"),
+		VANILLA_DATA_DIR.path_join("Characters/Dialogue/Robin.json"),
+		VANILLA_DATA_DIR.path_join("Characters/schedules/Robin.json"),
+		VANILLA_DATA_DIR.path_join("Characters/Lewis.png"),
+		VANILLA_DATA_DIR.path_join("Portraits/Lewis.png"),
+		VANILLA_DATA_DIR.path_join("Characters/Dialogue/Lewis.json"),
+		VANILLA_DATA_DIR.path_join("Characters/schedules/Lewis.json"),
 	]
 	
 	for file_path: String in required_files:

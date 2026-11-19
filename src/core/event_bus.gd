@@ -34,6 +34,13 @@ signal player_exhausted(is_exhausted: bool)
 signal money_changed(new_amount: int, delta: int)
 signal location_changed(from_map: StringName, to_map: StringName, target_cell: Vector2i)
 
+# NPCs & Dialogue
+signal dialogue_started(speaker_name: StringName, text: String, portrait_tex: Texture2D, emotion_idx: int)
+signal dialogue_page_changed(page_index: int, total_pages: int, text: String, emotion_idx: int)
+signal dialogue_ended(speaker_name: StringName)
+signal npc_moved(npc_name: StringName, location_id: StringName, cell: Vector2i)
+signal npc_schedule_point_reached(npc_name: StringName, point_index: int, point: Dictionary)
+
 # Content Registry & Data Ingestion
 signal content_registered(category: StringName, id: StringName)
 signal content_loading_started()

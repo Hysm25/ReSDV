@@ -850,6 +850,15 @@ def main() -> int:
         "Maps/townInterior.xnb",
         "Maps/farmhouse_tiles.xnb",
         "Maps/walls_and_floors.xnb",
+        # Characters, Portraits, Dialogue & Schedules
+        "Characters/Robin.xnb",
+        "Portraits/Robin.xnb",
+        "Characters/Dialogue/Robin.xnb",
+        "Characters/schedules/Robin.xnb",
+        "Characters/Lewis.xnb",
+        "Portraits/Lewis.xnb",
+        "Characters/Dialogue/Lewis.xnb",
+        "Characters/schedules/Lewis.xnb",
     ]
 
     # Target audio files for hash validation
@@ -926,10 +935,30 @@ def main() -> int:
     with open(os.path.join(maps_dir, "FarmHouse.json"), "w", encoding="utf-8") as f:
         json.dump(farmhouse_map, f, indent=2, ensure_ascii=False)
 
-    # Step 9: Extract Audio
+    # Step 9: Extract Characters, Portraits, Dialogues, and Schedules
+    chars_dir = os.path.join(output_dir, "Characters")
+    portraits_dir = os.path.join(output_dir, "Portraits")
+    dialogue_dir = os.path.join(chars_dir, "Dialogue")
+    sched_dir = os.path.join(chars_dir, "schedules")
+    os.makedirs(chars_dir, exist_ok=True)
+    os.makedirs(portraits_dir, exist_ok=True)
+    os.makedirs(dialogue_dir, exist_ok=True)
+    os.makedirs(sched_dir, exist_ok=True)
+
+    for npc in ["Robin", "Lewis"]:
+        extract_texture(dec_files[f"Characters/{npc}.xnb"], os.path.join(chars_dir, f"{npc}.png"))
+        extract_texture(dec_files[f"Portraits/{npc}.xnb"], os.path.join(portraits_dir, f"{npc}.png"))
+        d_map = extract_strings_objects(dec_files[f"Characters/Dialogue/{npc}.xnb"])
+        with open(os.path.join(dialogue_dir, f"{npc}.json"), "w", encoding="utf-8") as f:
+            json.dump(d_map, f, indent=2, ensure_ascii=False)
+        s_map = extract_strings_objects(dec_files[f"Characters/schedules/{npc}.xnb"])
+        with open(os.path.join(sched_dir, f"{npc}.json"), "w", encoding="utf-8") as f:
+            json.dump(s_map, f, indent=2, ensure_ascii=False)
+
+    # Step 10: Extract Audio
     audio_map = extract_audio(content_dir, output_dir)
 
-    # Step 10: Cleanup temp
+    # Step 11: Cleanup temp
     import shutil
     shutil.rmtree(temp_dir, ignore_errors=True)
 

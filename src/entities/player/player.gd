@@ -23,6 +23,8 @@ const TOOL_ANIM_DURATION: float = 0.22
 @export var energy_manager: EnergyManager = null
 @export var chest_manager: ChestManager = null
 @export var chest_ui: ChestUI = null
+@export var npc_manager: NPCManager = null
+@export var dialogue_ui: DialogueBoxUI = null
 @export var default_spawn_cell: Vector2i = Vector2i(64, 15)
 
 var active_tool: ToolType = ToolType.HOE
@@ -62,6 +64,20 @@ func _ready() -> void:
 				var hud_node: Node = parent_node.get_node_or_null("HUD")
 				if hud_node != null:
 					chest_ui = hud_node.get_node_or_null("ChestUI") as ChestUI
+
+	if npc_manager == null:
+		var parent_node: Node = get_parent()
+		if parent_node != null:
+			npc_manager = parent_node.get_node_or_null("NPCManager") as NPCManager
+
+	if dialogue_ui == null:
+		var parent_node: Node = get_parent()
+		if parent_node != null:
+			dialogue_ui = parent_node.get_node_or_null("DialogueBoxUI") as DialogueBoxUI
+			if dialogue_ui == null:
+				var hud_node: Node = parent_node.get_node_or_null("HUD")
+				if hud_node != null:
+					dialogue_ui = hud_node.get_node_or_null("DialogueBoxUI") as DialogueBoxUI
 	
 	if energy_manager != null:
 		energy_manager.exhaustion_changed.connect(func(_ex: bool) -> void: queue_redraw())
@@ -99,6 +115,10 @@ func _apply_map_setup() -> void:
 		cam.limit_bottom = active_loader.map_size.y * active_loader.tile_size.y
 
 func _physics_process(delta: float) -> void:
+	if dialogue_ui != null and dialogue_ui.visible:
+		velocity = Vector2.ZERO
+		return
+
 	if is_using_tool:
 		tool_anim_timer += delta
 		velocity = Vector2.ZERO
@@ -273,7 +293,12 @@ func use_active_tool() -> bool:
 	var cell: Vector2i = target_cell
 	var cur_loc: StringName = location_manager.current_location_id if location_manager != null else &"Farm"
 
-	# 1. Check for chest interactions first (open or pickup)
+	# 1. Check for NPC interaction first
+	if npc_manager != null and npc_manager.has_npc_at(cur_loc, cell):
+		if npc_manager.interact_with_npc_at(cur_loc, cell, self):
+			return true
+
+	# 2. Check for chest interactions (open or pickup)
 	if chest_manager != null and chest_manager.has_chest_at(cur_loc, cell):
 		var active_id: StringName = get_selected_item_id()
 		if active_id == &"vanilla:axe" or active_id == &"vanilla:pickaxe":

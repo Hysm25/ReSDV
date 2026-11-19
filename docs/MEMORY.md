@@ -84,4 +84,11 @@ updated: 2026-11-19
   - Built full modal `ChestUI` (`src/ui/chest_ui.tscn`, `src/ui/container_slot_ui.gd`) rendering 36 container slots alongside player inventory, supporting full stack transfers (left click) and single item transfers (right click), organize sorting, and `Esc` / `E` dismiss.
   - Connected `AudioManager` to play authentic SFX: `openBox` when opening, `doorClose` when closing, `woodyStep` when placed, and `axchop` when picked up.
   - Verified with automated test suite `tests/test_chest.tscn` and full engine regression test suite.
-- Next immediate task: Implement NPC movement schedules and dialogue engine. (Fallback: `~/.ai-context/MEMORY.md`)
+- NPC Movement Schedules & Dialogue Engine implemented & verified:
+  - Built `DialogueEngine` (`src/systems/dialogue/dialogue_engine.gd`) loading vanilla NPC dialogue dictionaries (`Robin.json`, `Lewis.json`), substituting tokens (`@`, `%farm`), parsing emotion tags (`$h`, `$s`, `$u`), and separating multi-page dialogues.
+  - Built `ScheduleEngine` (`src/systems/dialogue/schedule_engine.gd`) parsing authentic time-indexed schedule entries, converting SDV directions, and evaluating active waypoints per game clock tick.
+  - Built `NPC` entity (`src/entities/npc/npc.gd`) loading 64x320/64x256 character sprites and 128x256/128x192 portrait textures, with 4-directional animated walk cycles, tile navigation, and player interaction.
+  - Built `NPCManager` (`src/systems/npc/npc_manager.gd`) coordinating NPC schedules on time ticks, handling cross-location visibility/collisions, and managing player conversations.
+  - Built `DialogueBoxUI` modal (`src/ui/dialogue_box_ui.tscn`, `src/ui/dialogue_box_ui.gd`) rendering 64x64 cropped emotion portraits, villager nameplate, wrapped dialogue text, and page advance triggers.
+  - Verified with automated test suite `tests/test_npc.tscn` and full engine regression test suite.
+- Next immediate task: Implement foraging / debris clearing (chopping branches, breaking rocks, cutting grass). (Fallback: `~/.ai-context/MEMORY.md`)

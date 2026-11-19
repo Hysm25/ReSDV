@@ -1,0 +1,70 @@
+[gd_scene load_steps=2 format=3 uid="uid://dialogueboxui001"]
+
+[ext_resource type="Script" path="res://src/ui/dialogue_box_ui.gd" id="1_dialogue_ui"]
+
+[node name="DialogueBoxUI" type="CanvasLayer"]
+layer = 12
+visible = false
+script = ExtResource("1_dialogue_ui")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -170.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MainPanel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(580, 130)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/MainPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="CenterContainer/MainPanel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="CenterContainer/MainPanel/VBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Villager"
+
+[node name="ContentHBox" type="HBoxContainer" parent="CenterContainer/MainPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="PortraitBox" type="PanelContainer" parent="CenterContainer/MainPanel/VBox/ContentHBox"]
+custom_minimum_size = Vector2(68, 68)
+layout_mode = 2
+
+[node name="PortraitRect" type="TextureRect" parent="CenterContainer/MainPanel/VBox/ContentHBox/PortraitBox"]
+texture_filter = 1
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextLabel" type="Label" parent="CenterContainer/MainPanel/VBox/ContentHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 12
+text = "Dialogue text goes here..."
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="CenterContainer/MainPanel/VBox"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CenterContainer/MainPanel/VBox/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ArrowLabel" type="Label" parent="CenterContainer/MainPanel/VBox/Footer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "▼"
