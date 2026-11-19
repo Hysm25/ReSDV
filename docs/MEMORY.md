@@ -65,4 +65,9 @@ updated: 2026-11-19
   - Extended `ContentRegistry` with default tool definitions (`vanilla:hoe`, `vanilla:watering_can`, `vanilla:axe`, `vanilla:pickaxe`, `vanilla:scythe`) and cached `AtlasTexture` icon generation from extracted `TileSheets/tools.png` and `Maps/springobjects.png`.
   - Built 12-slot bottom Hotbar HUD (`src/ui/hotbar_ui.gd`, `src/ui/hotbar_slot_ui.gd`) rendering real item icons, stack counts, golden selection highlight, number shortcuts (1-9, 0, -, =), and mouse wheel/click slot switching.
   - Verified with automated test suite `tests/test_inventory.tscn` and full engine test suite.
-- Next immediate task: Expand audio pipeline for XACT wave banks (`XACT/*.xwb`) and sound bank (`Sound Bank.xsb`).
+- XACT Audio Extraction Pipeline & Sound System implemented & verified:
+  - Reverse-engineered `Sound Bank.xsb` (cue mapping and variation tables for 433 cues) and `Wave Bank.xwb` (437 MS-ADPCM wave tracks).
+  - Built standalone pure-Python MS-ADPCM stereo decoder with zero dependencies (`src/importer/extract_assets.py`) unpacking 23 gameplay SFX (`hoeHit`, `dirtyHit`, `wateringCan`, `slosh`, `coin`, `harvest`, `seeds`, `doorOpen`, `doorClose`, `axchop`, `pickUpItem`, `toolSwap`, `grassyStep`, `stoneStep`, `woodyStep`, `thudStep`, `cut`, `hammer`, `openBox`, `boulderBreak`, etc.) into standard 16-bit PCM WAVs in `user://vanilla_data/audio/`.
+  - Built typed `AudioManager` (`src/systems/audio/audio_manager.gd`) with custom RIFF/WAV loader, polyphonic player pool (8 players), and reactive `EventBus` connections for tilling (`hoeHit`), watering (`wateringCan`), planting (`dirtyHit`), harvesting (`coin`), warping (`doorOpen` / `doorClose`), and tool switching (`toolSwap`).
+  - Integrated `AudioManager` into `src/main.tscn` and verified via automated test suite `tests/test_audio.tscn` and full regression test suite.
+- Next immediate task: Implement player energy & stamina system, fatigue states, and tool usage animations.

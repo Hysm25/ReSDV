@@ -645,6 +645,174 @@ def extract_map(dec_path: str, default_name: str = "") -> dict:
     }
 
 
+def c_div(a: int, b: int) -> int:
+    return -((-a) // b) if a < 0 else a // b
+
+
+MS_ADPCM_COEFF1 = [256, 512, 0, 192, 240, 460, 392]
+MS_ADPCM_COEFF2 = [0, -256, 0, 64, 0, -208, -232]
+MS_ADPCM_ADAPTATION_TABLE = [
+    230, 230, 230, 230, 307, 409, 512, 614,
+    768, 614, 512, 409, 307, 230, 230, 230
+]
+
+TARGET_AUDIO_CUES = [
+    "hoeHit",
+    "dirtyHit",
+    "wateringCan",
+    "slosh",
+    "coin",
+    "harvest",
+    "seeds",
+    "doorOpen",
+    "doorClose",
+    "axchop",
+    "pickUpItem",
+    "toolSwap",
+    "dwoop",
+    "select",
+    "smallSelect",
+    "grassyStep",
+    "stoneStep",
+    "thudStep",
+    "woodyStep",
+    "cut",
+    "hammer",
+    "openBox",
+    "boulderBreak",
+]
+
+
+def decode_ms_adpcm_stereo(data: bytes, block_align: int = 140) -> bytes:
+    pcm = bytearray()
+    for b_offset in range(0, len(data), block_align):
+        block = data[b_offset : b_offset + block_align]
+        if len(block) < 14:
+            break
+        b_pred0 = block[0]
+        b_pred1 = block[1]
+        i_delta0, i_delta1, i_samp1_0, i_samp1_1, i_samp2_0, i_samp2_1 = struct.unpack('<hhhhhh', block[2:14])
+
+        pcm += struct.pack('<hh', i_samp2_0, i_samp2_1)
+        pcm += struct.pack('<hh', i_samp1_0, i_samp1_1)
+
+        pred = [b_pred0, b_pred1]
+        delta = [i_delta0, i_delta1]
+        samp1 = [i_samp1_0, i_samp1_1]
+        samp2 = [i_samp2_0, i_samp2_1]
+
+        for byte_idx in range(14, len(block)):
+            b = block[byte_idx]
+            nibbles = [b >> 4, b & 0x0F]
+            for ch in range(2):
+                nib = nibbles[ch]
+                snib = nib - 16 if nib >= 8 else nib
+                l_pred = c_div(samp1[ch] * MS_ADPCM_COEFF1[pred[ch]] + samp2[ch] * MS_ADPCM_COEFF2[pred[ch]], 256)
+                l_pred += snib * delta[ch]
+                l_pred = max(-32768, min(32767, l_pred))
+                samp2[ch] = samp1[ch]
+                samp1[ch] = l_pred
+                delta[ch] = c_div(delta[ch] * MS_ADPCM_ADAPTATION_TABLE[nib], 256)
+                if delta[ch] < 16:
+                    delta[ch] = 16
+            pcm += struct.pack('<hh', samp1[0], samp1[1])
+    return bytes(pcm)
+
+
+def make_wav(pcm_data: bytes, sample_rate: int = 44100, channels: int = 2) -> bytes:
+    byte_rate = sample_rate * channels * 2
+    block_align = channels * 2
+    fmt_chunk = struct.pack('<HHIIHH', 1, channels, sample_rate, byte_rate, block_align, 16)
+    riff_body = b'WAVEfmt ' + struct.pack('<I', len(fmt_chunk)) + fmt_chunk
+    riff_body += b'data' + struct.pack('<I', len(pcm_data)) + pcm_data
+    return b'RIFF' + struct.pack('<I', len(riff_body)) + riff_body
+
+
+def extract_audio(content_dir: str, output_dir: str) -> dict[str, str]:
+    xsb_path = os.path.join(content_dir, "XACT", "Sound Bank.xsb")
+    xwb_path = os.path.join(content_dir, "XACT", "Wave Bank.xwb")
+
+    if not os.path.isfile(xsb_path) or not os.path.isfile(xwb_path):
+        print(f"[Audio] Warning: Sound Bank or Wave Bank missing in {content_dir}/XACT/")
+        return {}
+
+    with open(xsb_path, "rb") as f:
+        sdbk = f.read()
+
+    num_simple, num_complex = struct.unpack('<HH', sdbk[19:23])
+    names_raw = sdbk[27259:]
+    names = [n.decode('ascii') for n in names_raw.split(b'\x00') if n]
+
+    simple_cues_offset = 20212
+    complex_cues_offset = 22097
+    variation_tables_offset = 22937
+
+    def extract_sound_track(sound_off: int) -> tuple[int, int]:
+        entry_len = struct.unpack('<H', sdbk[sound_off + 7 : sound_off + 9])[0]
+        payload = sdbk[sound_off + 9 : sound_off + 9 + entry_len]
+        if entry_len == 60:
+            track_idx = struct.unpack('<H', payload[19:21])[0]
+            wb_idx = payload[21]
+            return wb_idx, track_idx
+        elif entry_len == 67:
+            track_idx = struct.unpack('<H', payload[26:28])[0]
+            wb_idx = payload[28]
+            return wb_idx, track_idx
+        elif entry_len == 12:
+            track_idx = struct.unpack('<H', payload[0:2])[0]
+            wb_idx = payload[2]
+            return wb_idx, track_idx
+        else:
+            for off in range(len(payload) - 2):
+                w = struct.unpack('<H', payload[off : off + 2])[0]
+                if w < 437 and payload[off + 2] < 2:
+                    return payload[off + 2], w
+            return 0, 0
+
+    cue_map: dict[str, tuple[int, int]] = {}
+    for idx, name in enumerate(names):
+        if idx < num_simple:
+            c_pos = simple_cues_offset + idx * 5
+            sound_off = struct.unpack('<I', sdbk[c_pos + 1 : c_pos + 5])[0]
+            cue_map[name] = extract_sound_track(sound_off)
+        else:
+            c_idx = idx - num_simple
+            c_pos = complex_cues_offset + c_idx * 15
+            target_off = struct.unpack('<I', sdbk[c_pos + 1 : c_pos + 5])[0]
+            if target_off >= variation_tables_offset:
+                first_sound_off = struct.unpack('<I', sdbk[target_off + 8 : target_off + 12])[0]
+                cue_map[name] = extract_sound_track(first_sound_off)
+            else:
+                cue_map[name] = extract_sound_track(target_off)
+
+    audio_dir = os.path.join(output_dir, "audio")
+    os.makedirs(audio_dir, exist_ok=True)
+
+    extracted_files: dict[str, str] = {}
+    with open(xwb_path, "rb") as xwb:
+        for cue in TARGET_AUDIO_CUES:
+            if cue not in cue_map:
+                continue
+            wb_idx, trk_idx = cue_map[cue]
+            if wb_idx != 0:
+                continue
+
+            xwb.seek(148 + trk_idx * 24)
+            flags_dur, fmt, play_off, play_len, loop_start, loop_len = struct.unpack('<IIIIII', xwb.read(24))
+            xwb.seek(10636 + play_off)
+            adpcm_data = xwb.read(play_len)
+            pcm_data = decode_ms_adpcm_stereo(adpcm_data, 140)
+            wav_bytes = make_wav(pcm_data, 44100, 2)
+
+            dest_path = os.path.join(audio_dir, f"{cue}.wav")
+            with open(dest_path, "wb") as out_wav:
+                out_wav.write(wav_bytes)
+            extracted_files[cue] = dest_path
+
+    print(f"[Audio] Extracted {len(extracted_files)} SFX cues into {audio_dir}")
+    return extracted_files
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Extract vanilla Stardew Valley assets into user://vanilla_data/")
     parser.add_argument("--content-dir", default=DEFAULT_CONTENT_PATH, help="Path to Stardew Valley Content directory")
@@ -683,8 +851,14 @@ def main() -> int:
         "Maps/walls_and_floors.xnb",
     ]
 
+    # Target audio files for hash validation
+    audio_files = [
+        "XACT/Sound Bank.xsb",
+        "XACT/Wave Bank.xwb",
+    ]
+
     # Step 1: Validate MD5 hashes
-    if not validate_hashes(content_dir, target_files):
+    if not validate_hashes(content_dir, target_files + audio_files):
         print("[Warning] Content hash mismatch detected. Proceeding anyway...")
 
     # Step 2: Native decompressor
@@ -750,7 +924,10 @@ def main() -> int:
     with open(os.path.join(maps_dir, "FarmHouse.json"), "w", encoding="utf-8") as f:
         json.dump(farmhouse_map, f, indent=2, ensure_ascii=False)
 
-    # Step 9: Cleanup temp
+    # Step 9: Extract Audio
+    audio_map = extract_audio(content_dir, output_dir)
+
+    # Step 10: Cleanup temp
     import shutil
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -759,6 +936,7 @@ def main() -> int:
     print(f"  - Crops: {len(crops_map)} in Crops.json")
     print(f"  - Maps: Farm.json, FarmHouse.json in Maps/")
     print(f"  - Textures: crops, tools, springobjects, and all map tilesheets in Maps/ and TileSheets/")
+    print(f"  - Audio: {len(audio_map)} SFX WAV files in audio/")
     return 0
 
 

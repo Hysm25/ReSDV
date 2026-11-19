@@ -4,6 +4,7 @@ const GOGImporter = preload("res://src/importer/gog_importer.gd")
 
 @onready var location_manager: LocationManager = $LocationManager
 @onready var inventory_manager: InventoryManager = $InventoryManager
+@onready var audio_manager: AudioManager = $AudioManager
 @onready var farm_grid: FarmGrid = $FarmGrid
 @onready var crop_manager: CropManager = $CropManager
 @onready var player: Player = $Player

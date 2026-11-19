@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://b00main000001"]
+[gd_scene load_steps=10 format=3 uid="uid://b00main000001"]
 
 [ext_resource type="Script" path="res://src/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/systems/time/time_manager.gd" id="2_time_manager"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://src/entities/player/player.tscn" id="6_player"]
 [ext_resource type="PackedScene" path="res://src/ui/hud.tscn" id="7_hud"]
 [ext_resource type="Script" path="res://src/systems/inventory/inventory_manager.gd" id="8_inv_mgr"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_manager.gd" id="9_audio_mgr"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -17,6 +18,9 @@ script = ExtResource("2_time_manager")
 
 [node name="InventoryManager" type="Node" parent="."]
 script = ExtResource("8_inv_mgr")
+
+[node name="AudioManager" type="Node" parent="."]
+script = ExtResource("9_audio_mgr")
 
 [node name="LocationManager" type="Node2D" parent="." node_paths=PackedStringArray("player", "farm_grid", "crop_manager")]
 script = ExtResource("3_location_manager")
