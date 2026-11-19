@@ -281,6 +281,15 @@ func is_tile_passable(cell: Vector2i) -> bool:
 		return false
 	return not impassable_cells.has(cell)
 
+func add_warp(cell: Vector2i, target_map: StringName, target_coords: Vector2i) -> void:
+	warps[cell] = {
+		"target_map": target_map,
+		"target_coords": target_coords
+	}
+
+func has_warp(cell: Vector2i) -> bool:
+	return warps.has(cell)
+
 func get_warp(cell: Vector2i) -> Dictionary:
 	return warps.get(cell, {})
 

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/systems/time/time_manager.gd" id="2_time_manager"]
-[ext_resource type="Script" path="res://src/systems/world/map_loader.gd" id="3_map_loader"]
+[ext_resource type="Script" path="res://src/systems/world/location_manager.gd" id="3_location_manager"]
 [ext_resource type="Script" path="res://src/systems/world/farm_grid.gd" id="4_farm_grid"]
 [ext_resource type="Script" path="res://src/systems/farming/crop_manager.gd" id="5_crop_manager"]
 [ext_resource type="PackedScene" path="res://src/entities/player/player.tscn" id="6_player"]
@@ -14,21 +14,23 @@ script = ExtResource("1_main")
 [node name="TimeManager" type="Node" parent="."]
 script = ExtResource("2_time_manager")
 
-[node name="MapLoader" type="Node2D" parent="."]
-script = ExtResource("3_map_loader")
+[node name="LocationManager" type="Node2D" parent="." node_paths=PackedStringArray("player", "farm_grid", "crop_manager")]
+script = ExtResource("3_location_manager")
+player = NodePath("../Player")
+farm_grid = NodePath("../FarmGrid")
+crop_manager = NodePath("../CropManager")
 
-[node name="FarmGrid" type="Node2D" parent="." node_paths=PackedStringArray("map_loader")]
+[node name="FarmGrid" type="Node2D" parent="."]
 script = ExtResource("4_farm_grid")
-map_loader = NodePath("../MapLoader")
 
 [node name="CropManager" type="Node2D" parent="." node_paths=PackedStringArray("farm_grid")]
 script = ExtResource("5_crop_manager")
 farm_grid = NodePath("../FarmGrid")
 
-[node name="Player" parent="." node_paths=PackedStringArray("farm_grid", "crop_manager", "map_loader") instance=ExtResource("6_player")]
+[node name="Player" parent="." node_paths=PackedStringArray("farm_grid", "crop_manager", "location_manager") instance=ExtResource("6_player")]
 farm_grid = NodePath("../FarmGrid")
 crop_manager = NodePath("../CropManager")
-map_loader = NodePath("../MapLoader")
+location_manager = NodePath("../LocationManager")
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 zoom = Vector2(2.5, 2.5)

@@ -53,4 +53,10 @@ updated: 2026-11-19
   - Integrated `FarmGrid` with `MapLoader`: 80x65 grid dimension sync, procedural background disabling when real map is loaded, and diggability enforcement (`is_tile_diggable`) allowing tilling only on authentic diggable dirt (e.g. `(64, 18)`).
   - Integrated `Player` with `MapLoader`: automatic spawn at Farmhouse entrance `(64, 15)` and camera bounds clipping to farm dimensions (1280x1040).
   - Verified with test suites (`tests/test_map_loader.tscn`, `tests/test_vertical_slice.tscn`) and headless `main.tscn`.
+- Location & Warp transition system implemented & verified:
+  - Built typed `LocationManager` (`src/systems/world/location_manager.gd`) managing active location lifecycle, seamless map swapping, and physics collision switching.
+  - Configured authentic bidirectional warps: `Farm` porch door `(64, 14)` -> `FarmHouse` interior `(3, 11)` with facing UP, and `FarmHouse` exit `(3, 12)` -> `Farm` porch `(64, 15)` with facing DOWN.
+  - Integrated `Player` with `LocationManager`: automatic cell detection, movement into door detection, dynamic `Camera2D` limit clipping (1280x1040 Farm vs 192x192 FarmHouse), and tool action restriction while indoors.
+  - Guaranteed `FarmGrid` & `CropManager` state persistence: soil states and planted crops remain in memory while indoors, continue advancing overnight across `EventBus.day_started`, and seamlessly re-appear upon returning outside.
+  - Verified with automated test suite `tests/test_warps.tscn` and full headless engine verification.
 - Next immediate task: Expand audio pipeline for XACT wave banks (`XACT/*.xwb`) and sound bank (`Sound Bank.xsb`).

@@ -2,7 +2,7 @@ extends Node
 
 const GOGImporter = preload("res://src/importer/gog_importer.gd")
 
-@onready var map_loader: MapLoader = $MapLoader
+@onready var location_manager: LocationManager = $LocationManager
 @onready var farm_grid: FarmGrid = $FarmGrid
 @onready var crop_manager: CropManager = $CropManager
 @onready var player: Player = $Player
@@ -21,8 +21,8 @@ func _ready() -> void:
 	else:
 		print("[Main] Vanilla data detected and ready.")
 
-	if map_loader != null and map_loader.layers.is_empty():
-		map_loader.load_map()
+	if location_manager != null and location_manager.locations.is_empty():
+		location_manager.initialize_locations()
 
 	# Connect Player and HUD events
 	if player != null and hud != null:

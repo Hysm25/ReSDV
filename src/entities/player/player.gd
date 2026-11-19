@@ -16,6 +16,7 @@ const MOVE_SPEED: float = 110.0
 @export var farm_grid: FarmGrid = null
 @export var crop_manager: CropManager = null
 @export var map_loader: MapLoader = null
+@export var location_manager: LocationManager = null
 @export var default_spawn_cell: Vector2i = Vector2i(64, 15)
 
 var active_tool: ToolType = ToolType.HOE
@@ -27,7 +28,14 @@ var parsnip_seeds_count: int = 15
 var harvest_bag: Dictionary[StringName, int] = {}
 
 func _ready() -> void:
-	if map_loader != null:
+	if location_manager != null:
+		location_manager.player = self
+		# If location_manager already initialized, align with it
+		var cur_loader: MapLoader = location_manager.get_current_map_loader()
+		if cur_loader != null:
+			map_loader = cur_loader
+			_apply_map_setup()
+	elif map_loader != null:
 		if map_loader.map_size != Vector2i.ZERO:
 			_apply_map_setup()
 		else:
@@ -37,19 +45,47 @@ func _ready() -> void:
 	queue_redraw()
 
 func _apply_map_setup() -> void:
-	if map_loader == null:
+	var active_loader: MapLoader = location_manager.get_current_map_loader() if location_manager != null else map_loader
+	if active_loader == null:
 		return
-	global_position = map_loader.cell_to_center_world(default_spawn_cell)
 	var cam: Camera2D = get_node_or_null("Camera2D") as Camera2D
-	if cam != null and map_loader.map_size != Vector2i.ZERO:
+	if cam == null:
+		for child: Node in get_children():
+			if child is Camera2D:
+				cam = child as Camera2D
+				break
+	if cam != null and active_loader.map_size != Vector2i.ZERO:
 		cam.limit_left = 0
 		cam.limit_top = 0
-		cam.limit_right = map_loader.map_size.x * map_loader.tile_size.x
-		cam.limit_bottom = map_loader.map_size.y * map_loader.tile_size.y
+		cam.limit_right = active_loader.map_size.x * active_loader.tile_size.x
+		cam.limit_bottom = active_loader.map_size.y * active_loader.tile_size.y
 
 func _physics_process(_delta: float) -> void:
 	_handle_movement()
 	_update_target_cell()
+	_check_warps()
+
+func _check_warps() -> void:
+	if location_manager == null:
+		return
+	var active_loader: MapLoader = location_manager.get_current_map_loader()
+	if active_loader == null:
+		return
+	var cur_cell: Vector2i = active_loader.world_to_cell(global_position)
+	var is_moving: bool = velocity.length_squared() > 1.0
+	location_manager.check_and_trigger_warp(cur_cell, facing_direction if is_moving else Vector2i.ZERO)
+
+func _update_target_cell() -> void:
+	var active_loader: MapLoader = location_manager.get_current_map_loader() if location_manager != null else map_loader
+	var current_cell: Vector2i = Vector2i.ZERO
+	if active_loader != null:
+		current_cell = active_loader.world_to_cell(global_position)
+	elif farm_grid != null:
+		current_cell = farm_grid.world_to_cell(global_position)
+
+	target_cell = current_cell + facing_direction
+	if farm_grid != null and farm_grid.visible:
+		farm_grid.set_highlight_cell(target_cell)
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Tool selection via 1-4 keys
@@ -98,14 +134,6 @@ func _handle_movement() -> void:
 
 	move_and_slide()
 
-func _update_target_cell() -> void:
-	if farm_grid == null:
-		return
-
-	var current_cell: Vector2i = farm_grid.world_to_cell(global_position)
-	target_cell = current_cell + facing_direction
-	farm_grid.set_highlight_cell(target_cell)
-
 func _set_tool(tool_type: ToolType) -> void:
 	active_tool = tool_type
 	var tool_name: String = get_active_tool_name()
@@ -126,7 +154,9 @@ func get_active_tool_name() -> String:
 	return "None"
 
 func use_active_tool() -> bool:
-	if farm_grid == null:
+	if farm_grid == null or not farm_grid.visible:
+		return false
+	if location_manager != null and location_manager.current_location_id != &"Farm":
 		return false
 
 	var cell: Vector2i = target_cell
