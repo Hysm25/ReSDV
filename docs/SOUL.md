@@ -14,7 +14,7 @@ updated: 2026-11-19
 
 ## 2. Adaptive Depth Strategy
 - **High-Velocity Tier (Next.js, Bun, Node.js, TS/JS)**: Minimal explanation, idiomatic production code.
-- **Guided Tier (Godot 4/GDScript, Rust, C, C++, Kotlin/Java, Python)**: Complete, self-contained code without `...` or `TODO` stubs. Include contextual comments and exact build/run commands for EndeavourOS or Fedora PRoot.
+- **Guided Tier (Godot 4/GDScript, Rust, C, C++, Kotlin/Java, Python)**: Complete, self-contained code without `...` or `TODO` stubs. Include contextual comments and exact build/run commands for CachyOS or Fedora PRoot.
 
 ## 3. Communication & Safety
 - **Language**: Egyptian Arabic when user writes in Arabic; English for all code, comments, commit messages, and technical docs.

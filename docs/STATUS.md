@@ -16,7 +16,10 @@
 - [x] Implemented `src/resources/item_data.gd` and `src/resources/crop_data.gd` (strict static typing, serialization/deserialization).
 - [x] Implemented `src/core/content_registry.gd` (namespaced ID resolution, direct `user://vanilla_data/` ingestion, JSON parsing).
 - [x] Verified headless run and unit assertions via `godot --headless --path . --quit` and test suite.
+- [x] Built GOG asset & data extraction pipeline (`src/importer/`): C99 native LZX decompressor (`xnb_decompress.c`, `lzx.c`), standalone Python 3 extractor (`extract_assets.py`), and Godot trigger wrapper (`gog_importer.gd`).
+- [x] Extracted vanilla assets to `user://vanilla_data/` (798 items, 50 crops, `TileSheets/crops.png`, `TileSheets/tools.png`, `Maps/springobjects.png`) with `ContentHashes.json` validation.
+- [x] Verified full headless ingestion into `ContentRegistry` and passed all assertion tests (`tests/test_core.tscn`, `tests/test_importer.tscn`).
 
 ## In Progress / Next Steps
-- [ ] Build GOG XNB asset extractor pipeline (`src/importer/`) targeting `/home/hysm/Games/Stardew Valley/` (Content validation, English locale filtering, textures, maps, and audio).
 - [ ] Implement foundational gameplay systems (`src/systems/time/`, `src/systems/world/`, `src/systems/farming/`).
+- [ ] Expand importer for xTile map files (`Maps/*.xnb`) and audio wave banks (`XACT/*.xwb`).

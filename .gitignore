@@ -17,6 +17,11 @@ export/
 data_*/
 mono_crash.*.json
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Operating System & Editor Artifacts
 .directory
 .DS_Store
@@ -24,6 +29,8 @@ Thumbs.db
 *.tmp
 *~
 *.swp
+*.dec
+src/importer/xnb_decompress
 .idea/
 .vscode/
 .obsidian/

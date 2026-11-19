@@ -13,7 +13,7 @@ updated: 2026-11-19
 ---
 
 ## 2. Hardware & Operating Environments
-- **Primary Desktop**: Dell OptiPlex 390 (Intel Core i5-2400 Sandy Bridge, 4C/4T, AMD Radeon GPU) running **EndeavourOS Linux** (KDE Plasma).
+- **Primary Desktop**: Dell OptiPlex 390 (Intel Core i5-2400 Sandy Bridge, 4C/4T, AMD Radeon GPU) running **CachyOS Linux** (Arch-based, KDE Plasma).
   - *Hard Constraint*: CPU supports **AVX only** (NO AVX2). Avoid AVX2 binaries; require **`bun-baseline`** for Bun. Keep RAM/CPU overhead low.
 - **Mobile Dev Node**: Xiaomi Redmi Note 15 5G (Snapdragon 6 Gen 3, Adreno 710) running Android 16 (HyperOS) with **Termux** + **Fedora PRoot** (`aarch64`, `dnf`).
   - *Hard Constraint*: No `systemd` inside PRoot. Optimize for mobile thermals and memory.
@@ -32,4 +32,4 @@ updated: 2026-11-19
 - **Game Dev**: **Godot 4.x**, **GDScript** (strictly typed), Shaders, Engine/Modding Architecture.
 - **Systems & RE**: **Rust**, **C**, **C++** (reverse engineering, SDL3 porting, binary recompilation).
 - **JVM & Scripting**: **Kotlin**, **Java** (PaperMC plugins), **Python** (async, automation, scientific tooling).
-- **Directives**: Provide complete, self-contained code (no `...` or `// TODO`), explain non-obvious logic/lifecycle/memory invariants in comments, and include exact `fish` build/run commands for EndeavourOS or Termux Fedora PRoot.
+- **Directives**: Provide complete, self-contained code (no `...` or `// TODO`), explain non-obvious logic/lifecycle/memory invariants in comments, and include exact `fish` build/run commands for CachyOS or Termux Fedora PRoot.

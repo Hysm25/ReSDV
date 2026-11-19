@@ -15,7 +15,7 @@ updated: 2026-11-19
   - Visuals & Maps: Texture XNBs extracted to PNG; `Maps/` xTile XNBs converted for Godot `TileMapLayer`.
   - Audio: `XACT/` wave banks (`Wave Bank.xwb`, `Wave Bank(1.4).xwb`) and sound bank (`Sound Bank.xsb`) unpacked to WAV/OGG.
 - **Hardware Constraints**: 
-  - Primary: EndeavourOS on Intel Core i5-2400 (AVX-only, no AVX2). If using Bun, require `bun-baseline`.
+  - Primary: CachyOS Linux on Intel Core i5-2400 (AVX-only, no AVX2). If using Bun, require `bun-baseline`.
   - Mobile: Xiaomi Redmi Note 15 5G on Termux Fedora PRoot (`aarch64`, no `systemd`).
 - **Shell Convention**: Interactive terminal commands in `fish`. Standalone executable scripts in POSIX/Bash.
 
@@ -34,4 +34,9 @@ updated: 2026-11-19
   - `ItemData` (`res://src/resources/item_data.gd`) and `CropData` (`res://src/resources/crop_data.gd`) implemented with strict typing and serialization.
   - `ContentRegistry` (`res://src/core/content_registry.gd`) implemented with namespaced queries and direct `user://vanilla_data/` loading.
   - Headless execution and verification test suite passed.
-- Next immediate task: Build GOG XNB asset extractor pipeline (`src/importer/`) targeting `/home/hysm/Games/Stardew Valley/`.
+- GOG asset and data extraction pipeline (`src/importer/`) implemented & verified:
+  - C99 standalone LZX decompressor (`src/importer/lzx.c`, `src/importer/lzx.h`, `src/importer/xnb_decompress.c`) compiled with `gcc -O2` (AVX-only & ARM64 portable, zero AVX2 dependencies).
+  - Standalone Python 3 pipeline (`src/importer/extract_assets.py`) validates MD5 hashes via `ContentHashes.json`, unpacks `Strings/Objects.xnb` (1,532 entries), `Data/Crops.xnb` (50 crops), `Data/Objects.xnb` (798 objects), and exports RGBA PNGs (`crops.png`, `tools.png`, `springobjects.png`) into `user://vanilla_data/`.
+  - Godot wrapper `GOGImporter` (`res://src/importer/gog_importer.gd`) handles missing asset detection and automatic extraction trigger.
+  - Verification test suite (`tests/test_importer.tscn`) and core headless runs passed cleanly.
+- Next immediate task: Implement foundational gameplay systems (`src/systems/time/`, `src/systems/world/`, `src/systems/farming/`).

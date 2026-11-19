@@ -92,16 +92,20 @@ func load_vanilla_data() -> void:
 	var loaded_crops: int = 0
 
 	# Attempt loading items from JSON
-	var items_json_path: String = VANILLA_DATA_DIR.path_join("items.json")
+	var items_json_path: String = VANILLA_DATA_DIR.path_join("Objects.json")
 	if not FileAccess.file_exists(items_json_path):
 		items_json_path = VANILLA_DATA_DIR.path_join("Data/Objects.json")
+	if not FileAccess.file_exists(items_json_path):
+		items_json_path = VANILLA_DATA_DIR.path_join("items.json")
 	if FileAccess.file_exists(items_json_path):
 		loaded_items = load_items_from_json_file(items_json_path)
 
 	# Attempt loading crops from JSON
-	var crops_json_path: String = VANILLA_DATA_DIR.path_join("crops.json")
+	var crops_json_path: String = VANILLA_DATA_DIR.path_join("Crops.json")
 	if not FileAccess.file_exists(crops_json_path):
 		crops_json_path = VANILLA_DATA_DIR.path_join("Data/Crops.json")
+	if not FileAccess.file_exists(crops_json_path):
+		crops_json_path = VANILLA_DATA_DIR.path_join("crops.json")
 	if FileAccess.file_exists(crops_json_path):
 		loaded_crops = load_crops_from_json_file(crops_json_path)
 
