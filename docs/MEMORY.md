@@ -28,4 +28,10 @@ updated: 2026-11-19
 ## 3. Active Session Notes
 - Project documentation reorganized into `docs/` (`docs/ARCHITECTURE.md`, `docs/STATUS.md`, `docs/MEMORY.md`, `docs/USER.md`, `docs/SOUL.md`) with `AGENTS.md` and `README.md` at root.
 - Scope streamlined: 100% focused on clean-room Stardew Valley re-implementation (all `ModLoader` references removed).
-- Next immediate task: Configure `project.godot` (Compatibility Renderer) and implement Autoloads (`EventBus`, `ContentRegistry`) and base resource schemas.
+- Engine foundation implemented:
+  - `project.godot` configured with `gl_compatibility` renderer, `src/main.tscn` root scene, and registered `EventBus` + `ContentRegistry` autoloads.
+  - `EventBus` (`res://src/core/event_bus.gd`) implemented with typed global signals.
+  - `ItemData` (`res://src/resources/item_data.gd`) and `CropData` (`res://src/resources/crop_data.gd`) implemented with strict typing and serialization.
+  - `ContentRegistry` (`res://src/core/content_registry.gd`) implemented with namespaced queries and direct `user://vanilla_data/` loading.
+  - Headless execution and verification test suite passed.
+- Next immediate task: Build GOG XNB asset extractor pipeline (`src/importer/`) targeting `/home/hysm/Games/Stardew Valley/`.
