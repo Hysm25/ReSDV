@@ -1,0 +1,29 @@
+# Godot 4+ ignores
+.godot/
+*.translation
+
+# Clean-Room & Legal Asset Boundaries (Strict)
+# Absolutely zero original Stardew Valley game assets or local extracts in repo
+*.xnb
+*.XNB
+vanilla_data/
+extracted/
+mods/
+user/
+export/
+
+# Mono / C#
+.mono/
+data_*/
+mono_crash.*.json
+
+# Operating System & Editor Artifacts
+.directory
+.DS_Store
+Thumbs.db
+*.tmp
+*~
+*.swp
+.idea/
+.vscode/
+*.orig
