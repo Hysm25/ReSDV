@@ -22,6 +22,7 @@ func _ready() -> void:
 	test_player_tool_interaction()
 	test_cross_location_persistence()
 	test_debris_serialization()
+	test_debris_visual_alignment_and_bounds()
 
 	print("=======================================================")
 	print("--- ALL FORAGING & DEBRIS TESTS PASSED SUCCESSFULLY! ---")
@@ -360,3 +361,76 @@ func test_debris_serialization() -> void:
 	dm.queue_free()
 	dm2.queue_free()
 	print("[Test 11] Serialization verified.")
+
+
+func test_debris_visual_alignment_and_bounds() -> void:
+	print("[Test 12] Testing debris visual alignment, Sprite2D properties, and bounds...")
+	var dm: DebrisManager = DebrisManager.new()
+	var fg: FarmGrid = FarmGrid.new()
+	var player: Player = Player.new()
+	add_child(dm)
+	add_child(fg)
+	add_child(player)
+
+	player.farm_grid = fg
+	player.debris_manager = dm
+	fg.debris_manager = dm
+
+	# Test all 5 debris types across distinct coordinates
+	var test_cases: Array[Dictionary] = [
+		{"type": DebrisObject.DebrisType.TWIG, "cell": Vector2i(10, 10), "spawn": func(c: Vector2i) -> DebrisObject: return dm.spawn_twig(&"Farm", c)},
+		{"type": DebrisObject.DebrisType.STONE, "cell": Vector2i(11, 12), "spawn": func(c: Vector2i) -> DebrisObject: return dm.spawn_stone(&"Farm", c)},
+		{"type": DebrisObject.DebrisType.WEED, "cell": Vector2i(15, 18), "spawn": func(c: Vector2i) -> DebrisObject: return dm.spawn_weed(&"Farm", c)},
+		{"type": DebrisObject.DebrisType.GRASS, "cell": Vector2i(20, 22), "spawn": func(c: Vector2i) -> DebrisObject: return dm.spawn_grass(&"Farm", c)},
+		{"type": DebrisObject.DebrisType.FORAGE, "cell": Vector2i(25, 30), "spawn": func(c: Vector2i) -> DebrisObject: return dm.spawn_forage(&"Farm", c, &"vanilla:18")},
+	]
+
+	for tc: Dictionary in test_cases:
+		var c: Vector2i = tc["cell"] as Vector2i
+		var spawn_fn: Callable = tc["spawn"] as Callable
+		var obj: DebrisObject = spawn_fn.call(c) as DebrisObject
+
+		# 1. Logical Grid Cell & Position alignment
+		var expected_top_left: Vector2 = Vector2(c.x * 16.0, c.y * 16.0)
+		var expected_center: Vector2 = Vector2(c.x * 16.0 + 8.0, c.y * 16.0 + 8.0)
+		var expected_rect: Rect2 = Rect2(expected_top_left, Vector2(16.0, 16.0))
+
+		assert(obj.cell == c, "Logical cell must match target cell")
+		assert(obj.position == expected_top_left, "DebrisObject position must match top-left tile coords (cell * 16)")
+		assert(obj.global_position == expected_top_left, "DebrisObject global_position must match top-left tile coords")
+		assert(obj.get_global_visual_rect() == expected_rect, "Global visual rect must strictly equal logical tile rect")
+		assert(obj.get_visual_center() == expected_center, "Visual center must be strictly at (cell * 16 + 8, cell * 16 + 8)")
+
+		# 2. Sprite2D centered, offset, and position properties
+		assert(obj.sprite != null, "DebrisObject must instantiate a Sprite2D child")
+		assert(obj.sprite.centered == true, "Sprite2D must be centered")
+		assert(obj.sprite.offset == Vector2.ZERO, "Sprite2D offset must be Vector2.ZERO to prevent coordinate shifts")
+		assert(obj.sprite.position == Vector2(8.0, 8.0), "Sprite2D local position must be (8, 8) to center within 16x16 tile")
+		assert(obj.sprite.global_position == expected_center, "Sprite2D global position must be strictly centered on logical cell")
+		assert(obj.z_index >= 1, "DebrisObject z_index must be >= 1 to render above map ground layers")
+		assert(obj.sprite.z_index >= 1, "Sprite2D z_index must be >= 1")
+
+		# 3. Collision shape alignment (for obstacle items)
+		if obj.is_obstacle:
+			assert(obj._collision_shape != null, "Obstacle must have a CollisionShape2D")
+			assert(obj._collision_shape.position == Vector2(8.0, 8.0), "Collision shape must be centered at (8, 8)")
+			assert(obj._collision_shape.global_position == expected_center, "Collision shape global position must match cell center")
+			assert(obj._collision_shape.shape is RectangleShape2D, "Collision shape must be a RectangleShape2D")
+			var rect_shape: RectangleShape2D = obj._collision_shape.shape as RectangleShape2D
+			assert(rect_shape.size == Vector2(16.0, 16.0), "Collision box size must be 16x16")
+
+		# 4. Player targeting and FarmGrid cell highlight alignment
+		player.position = fg.cell_to_center_world(Vector2i(c.x, c.y - 1))
+		player.facing_direction = Vector2i.DOWN
+		player._update_target_cell()
+
+		assert(player.target_cell == c, "Player target cell must match debris cell")
+		assert(fg.highlight_cell == c, "FarmGrid highlight cell must match debris cell")
+		assert(fg.cell_to_world(player.target_cell) == obj.position, "FarmGrid cell_to_world must match debris position")
+		assert(fg.cell_to_center_world(player.target_cell) == obj.get_visual_center(), "FarmGrid center must match debris visual center")
+		assert(fg.cell_to_center_world(player.target_cell) == obj.sprite.global_position, "FarmGrid center must match Sprite2D global position")
+
+	dm.queue_free()
+	fg.queue_free()
+	player.queue_free()
+	print("[Test 12] Debris visual alignment, Sprite2D properties, and bounds verified.")

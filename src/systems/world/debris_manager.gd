@@ -13,6 +13,8 @@ var _debris: Dictionary[StringName, Dictionary] = {}
 
 
 func _ready() -> void:
+	z_index = 2
+	y_sort_enabled = true
 	if is_instance_valid(EventBus):
 		EventBus.location_changed.connect(_on_location_changed)
 
@@ -67,6 +69,8 @@ func spawn_debris(
 	var obj: DebrisObject = DebrisObject.new(cell, loc, type, sprite_idx, item_id, yield_id, yield_count)
 	_debris[loc][cell] = obj
 	add_child(obj)
+	obj.update_position()
+	obj.z_index = 2
 
 	var is_active: bool = (loc == current_location_id)
 	obj.visible = is_active
@@ -281,6 +285,8 @@ func load_from_dict(data: Dictionary) -> void:
 				var obj: DebrisObject = DebrisObject.from_dict(obj_data as Dictionary, loc)
 				_debris[loc][obj.cell] = obj
 				add_child(obj)
+				obj.update_position()
+				obj.z_index = 2
 				var is_active: bool = (loc == current_location_id)
 				obj.visible = is_active
 				obj.process_mode = Node.PROCESS_MODE_INHERIT if is_active else Node.PROCESS_MODE_DISABLED
