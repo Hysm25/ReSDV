@@ -1,0 +1,66 @@
+[gd_scene load_steps=2 format=3 uid="uid://dhud000001"]
+
+[ext_resource type="Script" path="res://src/ui/hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="ClockPanel" type="PanelContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 80.0
+grow_horizontal = 0
+
+[node name="VBox" type="VBoxContainer" parent="ClockPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="DateLabel" type="Label" parent="ClockPanel/VBox"]
+layout_mode = 2
+text = "Spring 1, Yr 1"
+horizontal_alignment = 1
+
+[node name="ClockLabel" type="Label" parent="ClockPanel/VBox"]
+layout_mode = 2
+text = "6:00 AM"
+horizontal_alignment = 1
+
+[node name="ToolPanel" type="PanelContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_top = -64.0
+offset_right = 220.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HBox" type="HBoxContainer" parent="ToolPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="ToolLabel" type="Label" parent="ToolPanel"]
+layout_mode = 2
+text = "Tool: Hoe [1]"
+horizontal_alignment = 0
+
+[node name="HarvestLabel" type="Label" parent="ToolPanel"]
+layout_mode = 2
+text = "Parsnips in Bag: 0"
+horizontal_alignment = 2
+
+[node name="Instructions" type="Label" parent="."]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 450.0
+offset_bottom = 70.0
+text = "WASD/Arrows: Move | Space/LMB: Use Tool
+1: Hoe | 2: Water Can | 3: Parsnip Seeds | 4: Hand
+F1/T: Next Day | F2: +1 Hour"

@@ -24,6 +24,8 @@ enum Category {
 @export var name: String = ""
 @export var description: String = ""
 @export var category: Category = Category.GENERAL
+@export var texture_path: String = ""
+@export var sprite_index: int = -1
 @export var texture: Texture2D = null
 @export var max_stack: int = 999
 @export var price: int = 0
@@ -54,6 +56,12 @@ static func from_dict(data: Dictionary) -> ItemData:
 		item.can_be_given_as_gift = bool(data["can_be_given_as_gift"])
 	if data.has("can_be_trashed"):
 		item.can_be_trashed = bool(data["can_be_trashed"])
+	if data.has("texture"):
+		item.texture_path = str(data["texture"])
+	elif data.has("texture_path"):
+		item.texture_path = str(data["texture_path"])
+	if data.has("sprite_index"):
+		item.sprite_index = int(data["sprite_index"])
 	return item
 
 func to_dict() -> Dictionary:
@@ -67,4 +75,6 @@ func to_dict() -> Dictionary:
 		"edibility": edibility,
 		"can_be_given_as_gift": can_be_given_as_gift,
 		"can_be_trashed": can_be_trashed,
+		"texture_path": texture_path,
+		"sprite_index": sprite_index,
 	}

@@ -19,7 +19,13 @@
 - [x] Built GOG asset & data extraction pipeline (`src/importer/`): C99 native LZX decompressor (`xnb_decompress.c`, `lzx.c`), standalone Python 3 extractor (`extract_assets.py`), and Godot trigger wrapper (`gog_importer.gd`).
 - [x] Extracted vanilla assets to `user://vanilla_data/` (798 items, 50 crops, `TileSheets/crops.png`, `TileSheets/tools.png`, `Maps/springobjects.png`) with `ContentHashes.json` validation.
 - [x] Verified full headless ingestion into `ContentRegistry` and passed all assertion tests (`tests/test_core.tscn`, `tests/test_importer.tscn`).
+- [x] Implemented Time & Calendar system (`src/systems/time/time_manager.gd`): 10-minute in-game ticks, calendar day/season/year progression, `EventBus` signals, and debug advance keys (`F1`/`T`, `F2`).
+- [x] Implemented Farm Grid & Terrain system (`src/systems/world/farm_grid.gd`): 16x16 tile grid management, soil states (untilled, tilled, watered), and selection highlighting.
+- [x] Implemented Crop Lifecycle system (`src/systems/farming/crop_manager.gd`): renders vanilla crop sprites from `user://vanilla_data/TileSheets/crops.png`, manages phase progression on daily watering, and handles harvest yields.
+- [x] Implemented Player controller (`src/entities/player/`): 8-directional movement, grid targeting, tool selection (Hoe, Watering Can, Parsnip Seeds, Hand), and minimal HUD (`src/ui/hud.tscn`).
+- [x] Assembled playable Vertical Slice (`src/main.tscn`) and verified end-to-end integration via `tests/test_vertical_slice.tscn`.
 
 ## In Progress / Next Steps
-- [ ] Implement foundational gameplay systems (`src/systems/time/`, `src/systems/world/`, `src/systems/farming/`).
 - [ ] Expand importer for xTile map files (`Maps/*.xnb`) and audio wave banks (`XACT/*.xwb`).
+- [ ] Implement inventory bag & hotbar system with ItemData textures from `Maps/springobjects.png`.
+- [ ] Implement energy & stamina system and player tool animations.

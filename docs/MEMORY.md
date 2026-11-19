@@ -39,4 +39,11 @@ updated: 2026-11-19
   - Standalone Python 3 pipeline (`src/importer/extract_assets.py`) validates MD5 hashes via `ContentHashes.json`, unpacks `Strings/Objects.xnb` (1,532 entries), `Data/Crops.xnb` (50 crops), `Data/Objects.xnb` (798 objects), and exports RGBA PNGs (`crops.png`, `tools.png`, `springobjects.png`) into `user://vanilla_data/`.
   - Godot wrapper `GOGImporter` (`res://src/importer/gog_importer.gd`) handles missing asset detection and automatic extraction trigger.
   - Verification test suite (`tests/test_importer.tscn`) and core headless runs passed cleanly.
-- Next immediate task: Implement foundational gameplay systems (`src/systems/time/`, `src/systems/world/`, `src/systems/farming/`).
+- Vertical Slice gameplay loop implemented & verified:
+  - `TimeManager` (`src/systems/time/time_manager.gd`): 10-minute game ticks, day/season/year progression, `EventBus` signals, debug advance keys (`F1`/`T`, `F2`).
+  - `FarmGrid` (`src/systems/world/farm_grid.gd`): 16x16 tile management, soil states (untilled, tilled, watered), selection cursor.
+  - `CropManager` (`src/systems/farming/crop_manager.gd`): Ingests `vanilla:472` Parsnip and all 50 crops, renders sprites from `user://vanilla_data/TileSheets/crops.png`, advances growth on overnight watering, delivers harvest yields.
+  - `Player` (`src/entities/player/player.gd`): 8-directional movement, grid targeting, tool actions (Hoe, Watering Can, Parsnip Seeds, Hand).
+  - `HUD` (`src/ui/hud.gd`): displays time, calendar, active tool, and harvested items.
+  - All test suites passed: `tests/test_core.tscn`, `tests/test_importer.tscn`, `tests/test_vertical_slice.tscn`, and headless main scene.
+- Next immediate task: Expand importer for xTile map files (`Maps/*.xnb`) and audio wave banks (`XACT/*.xwb`).

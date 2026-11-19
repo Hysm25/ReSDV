@@ -15,6 +15,9 @@ extends Resource
 @export var max_harvest: int = 1
 @export var max_harvest_increase_per_farming_level: float = 0.0
 @export var chance_for_extra_crops: float = 0.0
+@export var texture_path: String = "TileSheets/crops"
+@export var sprite_index: int = 0
+@export var harvest_method: int = 0
 @export var texture: Texture2D = null
 
 func get_total_growth_days() -> int:
@@ -61,6 +64,14 @@ static func from_dict(data: Dictionary) -> CropData:
 		crop.max_harvest_increase_per_farming_level = float(data["max_harvest_increase_per_farming_level"])
 	if data.has("chance_for_extra_crops"):
 		crop.chance_for_extra_crops = float(data["chance_for_extra_crops"])
+	if data.has("texture"):
+		crop.texture_path = str(data["texture"])
+	elif data.has("texture_path"):
+		crop.texture_path = str(data["texture_path"])
+	if data.has("sprite_index"):
+		crop.sprite_index = int(data["sprite_index"])
+	if data.has("harvest_method"):
+		crop.harvest_method = int(data["harvest_method"])
 	return crop
 
 func to_dict() -> Dictionary:
@@ -78,4 +89,7 @@ func to_dict() -> Dictionary:
 		"max_harvest": max_harvest,
 		"max_harvest_increase_per_farming_level": max_harvest_increase_per_farming_level,
 		"chance_for_extra_crops": chance_for_extra_crops,
+		"texture_path": texture_path,
+		"sprite_index": sprite_index,
+		"harvest_method": harvest_method,
 	}
