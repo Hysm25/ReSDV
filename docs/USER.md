@@ -3,7 +3,7 @@ tags: [ai-context, profile]
 updated: 2026-11-19
 ---
 
-# User Profile & System Context (`USER.md`)
+# User Profile & System Context (`docs/USER.md`)
 
 ## 1. Identity & Communication
 - **Role**: Engineering Student (Age: 20), Port Said, Egypt.

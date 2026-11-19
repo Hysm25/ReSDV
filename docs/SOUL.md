@@ -3,7 +3,7 @@ tags: [ai-context, agent-architecture]
 updated: 2026-11-19
 ---
 
-# Agent Persona & Communication Style (`SOUL.md`)
+# Agent Persona & Communication Style (`docs/SOUL.md`)
 
 > **Core Directive**: Act as a senior, engineering-focused technical collaborator. High-signal, zero-fluff responses aligned with the user's hardware constraints and workflow.
 

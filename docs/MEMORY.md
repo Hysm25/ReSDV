@@ -3,11 +3,11 @@ tags: [ai-context, memory]
 updated: 2026-11-19
 ---
 
-# Persistent Memory & Quirks (`MEMORY.md`)
+# Persistent Memory & Quirks (`docs/MEMORY.md`)
 
 ## 1. Project Context & Constraints
 - **Clean-Room ReSDV**: Clean-room Stardew Valley re-implementation in Godot 4.3+ (strictly typed GDScript).
-- **Asset Boundary**: Zero copyrighted assets in repository. Vanilla assets extracted from user-owned GOG installation into `user://vanilla_data/` and loaded directly into `ContentRegistry` during Phase 1.
+- **Asset Boundary**: Zero copyrighted assets in repository. Vanilla assets extracted from user-owned GOG installation into `user://vanilla_data/` and loaded directly into `ContentRegistry`.
 - **GOG Game Source Details**:
   - Root: `/home/hysm/Games/Stardew Valley/` (Content path: `/home/hysm/Games/Stardew Valley/Content/`).
   - Validation: `ContentHashes.json` used for MD5/SHA validation of game files.
@@ -20,15 +20,12 @@ updated: 2026-11-19
 - **Shell Convention**: Interactive terminal commands in `fish`. Standalone executable scripts in POSIX/Bash.
 
 ## 2. Architectural Decisions
-- **Autoload Singletons (Phase 1)**:
+- **Autoload Singletons**:
   1. `EventBus` (`res://src/core/event_bus.gd`): Typed global event dispatcher.
   2. `ContentRegistry` (`res://src/core/content_registry.gd`): Ingests `user://vanilla_data/` directly with `vanilla:*` namespace.
-- **Deferred Architecture (Phase 2+)**:
-  - `ModLoader` (`res://src/core/mod_loader.gd`): Multi-mod discovery (`user://mods/`), `mod.json` parsing, dependency graphs, and script/asset overriding.
 - **Coding Standards**: Strict static typing for all variables, params, and return types. Composition over inheritance. No God Objects.
 
 ## 3. Active Session Notes
-- Workspace documentation initialized and updated: `AGENTS.md`, `ARCHITECTURE.md`, `USER.md`, `SOUL.md`, `STATUS.md`, `MEMORY.md`.
-- Scope refined: `ModLoader` deferred to Phase 2; Phase 1 prioritizes core runtime (`EventBus`, `ContentRegistry`) and vanilla data loading.
-- GOG installation layout and extraction parameters fully documented.
-- Next immediate task: Configure `project.godot` (Compatibility Renderer) and implement Phase 1 Autoloads (`EventBus`, `ContentRegistry`).
+- Project documentation reorganized into `docs/` (`docs/ARCHITECTURE.md`, `docs/STATUS.md`, `docs/MEMORY.md`, `docs/USER.md`, `docs/SOUL.md`) with `AGENTS.md` and `README.md` at root.
+- Scope streamlined: 100% focused on clean-room Stardew Valley re-implementation (all `ModLoader` references removed).
+- Next immediate task: Configure `project.godot` (Compatibility Renderer) and implement Autoloads (`EventBus`, `ContentRegistry`) and base resource schemas.

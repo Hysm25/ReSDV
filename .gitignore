@@ -26,4 +26,5 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+.obsidian/
 *.orig

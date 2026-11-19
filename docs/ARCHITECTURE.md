@@ -1,14 +1,14 @@
-# Project Architecture (`ARCHITECTURE.md`)
+# Project Architecture (`docs/ARCHITECTURE.md`)
 
 > **Project**: Clean-Room Re-implementation of *Stardew Valley* in **Godot 4.x (GDScript)**.
-> **Goal**: Legal, open-source engine runtime that imports assets/data from a user-owned **GOG** copy of the game (v1.6+). Phase 1 focuses strictly on the clean-room engine core and direct vanilla data ingestion, with a first-class **Modding System** (`ModLoader`) planned for Phase 2+.
+> **Goal**: Legal, open-source clean-room engine runtime that imports assets and data from a user-owned **GOG** copy of the game (v1.6+) and runs the vanilla game natively.
 
 ---
 
 ## 1. Core Legal & Data Boundary
 - **Zero Copyrighted Assets**: This repository contains **engine code only**. No sprites, audio, maps, dialogue, or `.xnb` files from the original game are ever committed.
 - **Asset Importer Pipeline**: On first launch (or via CLI tool), the engine extracts assets from the user's GOG installation into `user://vanilla_data/` (converted to PNG, OGG/WAV, JSON).
-- **Vanilla Ingestion (Phase 1)**: `user://vanilla_data/` is ingested directly into `ContentRegistry` under the `vanilla:*` namespace. External `ModLoader` orchestration (`user://mods/`) is deferred to Phase 2.
+- **Direct Vanilla Ingestion**: `user://vanilla_data/` is ingested directly into `ContentRegistry` on startup under the `vanilla:*` namespace.
 
 ---
 
@@ -40,17 +40,13 @@
 
 ## 4. Core Architecture: Registry + EventBus
 
-### Autoload Singletons (Phase 1)
+### Autoload Singletons
 1. `EventBus` (`res://src/core/event_bus.gd`):
    - Global typed signals for decoupled communication (`day_started`, `time_ticked`, `crop_planted`, `crop_harvested`, `item_used`).
    - Systems subscribe to signals instead of mutating other systems directly.
 2. `ContentRegistry` (`res://src/core/content_registry.gd`):
    - Central dictionaries holding all registered game definitions (`items`, `crops`, `tiles`, `recipes`, `npcs`) keyed by namespaced IDs (`vanilla:parsnip`).
-   - In Phase 1, loads extracted JSON/Resources directly from `user://vanilla_data/`.
-
-### Deferred Architecture (Phase 2+)
-- `ModLoader` (`res://src/core/mod_loader.gd`):
-  - Scans `user://mods/`, parses `mod.json` manifests, resolves dependencies and load order, and supports overriding `vanilla:*` entries with modded data or dynamic `.pck`/`.gd` scripts.
+   - Directly loads extracted JSON/Resources from `user://vanilla_data/` on startup.
 
 ---
 
@@ -58,11 +54,16 @@
 ```text
 res://
 ├── project.godot
-├── ARCHITECTURE.md
-├── STATUS.md                 # Current progress & next immediate task
-├── MEMORY.md                 # Persistent architectural memory & quirks
+├── AGENTS.md
+├── README.md
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── STATUS.md
+│   ├── MEMORY.md
+│   ├── USER.md
+│   └── SOUL.md
 └── src/
-    ├── core/                 # Autoloads: event_bus.gd, content_registry.gd (mod_loader.gd in Phase 2)
+    ├── core/                 # Autoloads: event_bus.gd, content_registry.gd
     ├── importer/             # GOG folder scanner & XNB -> PNG/JSON/OGG extractor
     ├── resources/            # Custom Resource classes (ItemData, CropData, ToolData)
     ├── systems/              # Isolated systems (time/, farming/, inventory/, world/)

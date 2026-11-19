@@ -5,9 +5,11 @@
 ---
 
 ## 1. Context Injections
-- **User Profile & Environment**: @[USER](~/.ai-context/USER.md)
-- **Assistant Persona & Guardrails**: @[SOUL](~/.ai-context/SOUL.md)
-- **Persistent Memory & Quirks**: @[MEMORY](~/.ai-context/MEMORY.md)
+- **User Profile & Environment**: @[USER](docs/USER.md) (Fallback: `~/.ai-context/USER.md`)
+- **Assistant Persona & Guardrails**: @[SOUL](docs/SOUL.md) (Fallback: `~/.ai-context/SOUL.md`)
+- **Persistent Memory & Quirks**: @[MEMORY](docs/MEMORY.md) (Fallback: `~/.ai-context/MEMORY.md`)
+- **Architecture & System Design**: @[ARCHITECTURE](docs/ARCHITECTURE.md)
+- **Project Progress & Plan**: @[STATUS](docs/STATUS.md)
 
 ---
 
