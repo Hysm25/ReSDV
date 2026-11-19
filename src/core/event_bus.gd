@@ -25,6 +25,7 @@ signal inventory_changed(slot_index: int, item_id: StringName, count: int)
 # Player Status & Economy
 signal player_energy_changed(new_energy: float, max_energy: float)
 signal player_health_changed(new_health: float, max_health: float)
+signal player_exhausted(is_exhausted: bool)
 signal money_changed(new_amount: int, delta: int)
 signal location_changed(from_map: StringName, to_map: StringName, target_cell: Vector2i)
 

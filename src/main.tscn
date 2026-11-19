@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://b00main000001"]
+[gd_scene load_steps=11 format=3 uid="uid://b00main000001"]
 
 [ext_resource type="Script" path="res://src/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/systems/time/time_manager.gd" id="2_time_manager"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://src/ui/hud.tscn" id="7_hud"]
 [ext_resource type="Script" path="res://src/systems/inventory/inventory_manager.gd" id="8_inv_mgr"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_manager.gd" id="9_audio_mgr"]
+[ext_resource type="Script" path="res://src/systems/stats/energy_manager.gd" id="10_energy_mgr"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -21,6 +22,9 @@ script = ExtResource("8_inv_mgr")
 
 [node name="AudioManager" type="Node" parent="."]
 script = ExtResource("9_audio_mgr")
+
+[node name="EnergyManager" type="Node" parent="."]
+script = ExtResource("10_energy_mgr")
 
 [node name="LocationManager" type="Node2D" parent="." node_paths=PackedStringArray("player", "farm_grid", "crop_manager")]
 script = ExtResource("3_location_manager")
@@ -35,11 +39,12 @@ script = ExtResource("4_farm_grid")
 script = ExtResource("5_crop_manager")
 farm_grid = NodePath("../FarmGrid")
 
-[node name="Player" parent="." node_paths=PackedStringArray("farm_grid", "crop_manager", "location_manager", "inventory_manager") instance=ExtResource("6_player")]
+[node name="Player" parent="." node_paths=PackedStringArray("farm_grid", "crop_manager", "location_manager", "inventory_manager", "energy_manager") instance=ExtResource("6_player")]
 farm_grid = NodePath("../FarmGrid")
 crop_manager = NodePath("../CropManager")
 location_manager = NodePath("../LocationManager")
 inventory_manager = NodePath("../InventoryManager")
+energy_manager = NodePath("../EnergyManager")
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 zoom = Vector2(2.5, 2.5)

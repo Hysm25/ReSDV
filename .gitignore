@@ -1,6 +1,7 @@
 # Godot 4+ ignores
 .godot/
 *.translation
+*.uid
 
 # Clean-Room & Legal Asset Boundaries (Strict)
 # Absolutely zero original Stardew Valley game assets or local extracts in repo

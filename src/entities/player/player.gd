@@ -12,23 +12,42 @@ enum ToolType {
 }
 
 const MOVE_SPEED: float = 110.0
+const EXHAUSTED_SPEED: float = 55.0
+const TOOL_ANIM_DURATION: float = 0.22
 
 @export var farm_grid: FarmGrid = null
 @export var crop_manager: CropManager = null
 @export var map_loader: MapLoader = null
 @export var location_manager: LocationManager = null
 @export var inventory_manager: InventoryManager = null
+@export var energy_manager: EnergyManager = null
 @export var default_spawn_cell: Vector2i = Vector2i(64, 15)
 
 var active_tool: ToolType = ToolType.HOE
 var facing_direction: Vector2i = Vector2i.DOWN
 var target_cell: Vector2i = Vector2i.ZERO
 
+# Tool animation state
+var is_using_tool: bool = false
+var tool_anim_timer: float = 0.0
+var animated_tool_id: StringName = &""
+
 # Basic Inventory
 var parsnip_seeds_count: int = 15
 var harvest_bag: Dictionary[StringName, int] = {}
 
 func _ready() -> void:
+	if energy_manager == null:
+		# Auto-discover EnergyManager sibling or child
+		var parent_node: Node = get_parent()
+		if parent_node != null:
+			energy_manager = parent_node.get_node_or_null("EnergyManager") as EnergyManager
+		if energy_manager == null:
+			energy_manager = get_node_or_null("EnergyManager") as EnergyManager
+	
+	if energy_manager != null:
+		energy_manager.exhaustion_changed.connect(func(_ex: bool) -> void: queue_redraw())
+
 	if location_manager != null:
 		location_manager.player = self
 		# If location_manager already initialized, align with it
@@ -61,7 +80,17 @@ func _apply_map_setup() -> void:
 		cam.limit_right = active_loader.map_size.x * active_loader.tile_size.x
 		cam.limit_bottom = active_loader.map_size.y * active_loader.tile_size.y
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	if is_using_tool:
+		tool_anim_timer += delta
+		velocity = Vector2.ZERO
+		queue_redraw()
+		if tool_anim_timer >= TOOL_ANIM_DURATION:
+			is_using_tool = false
+			tool_anim_timer = 0.0
+			queue_redraw()
+		return
+
 	_handle_movement()
 	_update_target_cell()
 	_check_warps()
@@ -117,6 +146,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		use_active_tool()
 	elif event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_LEFT:
 		use_active_tool()
+	# Eat food trigger via E or Right Click
+	elif (event is InputEventKey and event.is_pressed() and not event.is_echo() and event.keycode == KEY_E) \
+		or (event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_RIGHT):
+		try_eat_selected_item()
+
+func get_effective_move_speed() -> float:
+	if energy_manager != null and energy_manager.is_exhausted:
+		return EXHAUSTED_SPEED
+	return MOVE_SPEED
 
 func _handle_movement() -> void:
 	var input_vec: Vector2 = Vector2.ZERO
@@ -133,7 +171,7 @@ func _handle_movement() -> void:
 
 	if input_vec != Vector2.ZERO:
 		input_vec = input_vec.normalized()
-		velocity = input_vec * MOVE_SPEED
+		velocity = input_vec * get_effective_move_speed()
 
 		# Update cardinal facing direction
 		if absf(input_vec.x) > absf(input_vec.y):
@@ -145,6 +183,27 @@ func _handle_movement() -> void:
 		velocity = Vector2.ZERO
 
 	move_and_slide()
+
+func _start_tool_animation(tool_id: StringName) -> void:
+	is_using_tool = true
+	tool_anim_timer = 0.0
+	animated_tool_id = tool_id
+	queue_redraw()
+
+func try_eat_selected_item() -> bool:
+	if inventory_manager == null:
+		return false
+	var slot: InventorySlot = inventory_manager.get_selected_slot()
+	if slot == null or slot.is_empty():
+		return false
+	var item_id: StringName = slot.item_id
+	var item_data: ItemData = ContentRegistry.get_item(item_id)
+	if item_data != null and item_data.is_edible():
+		if energy_manager != null and energy_manager.eat_item(item_id):
+			inventory_manager.remove_item_at(inventory_manager.selected_slot_index, 1)
+			print("[Player] Ate %s! Energy restored." % item_data.name)
+			return true
+	return false
 
 func _set_tool(tool_type: ToolType) -> void:
 	active_tool = tool_type
@@ -180,6 +239,9 @@ func use_active_tool() -> bool:
 		return false
 	if location_manager != null and location_manager.current_location_id != &"Farm":
 		return false
+	if energy_manager != null and not energy_manager.can_use_tool():
+		print("[Player] Cannot use tool: completely exhausted / passed out!")
+		return false
 
 	var cell: Vector2i = target_cell
 
@@ -202,12 +264,24 @@ func use_active_tool() -> bool:
 		var item_id: StringName = slot.item_id
 		if item_id == &"vanilla:hoe":
 			if farm_grid.till_soil(cell):
+				if energy_manager != null:
+					energy_manager.consume_tool_energy(item_id)
+				_start_tool_animation(item_id)
 				print("[Player] Tilled soil at %s" % str(cell))
 				return true
 		elif item_id == &"vanilla:watering_can":
 			if farm_grid.water_soil(cell):
+				if energy_manager != null:
+					energy_manager.consume_tool_energy(item_id)
+				_start_tool_animation(item_id)
 				print("[Player] Watered soil at %s" % str(cell))
 				return true
+		elif item_id == &"vanilla:axe" or item_id == &"vanilla:pickaxe" or item_id == &"vanilla:scythe":
+			if energy_manager != null:
+				energy_manager.consume_tool_energy(item_id)
+			_start_tool_animation(item_id)
+			print("[Player] Swung %s at %s" % [item_id, str(cell)])
+			return true
 		else:
 			# Check if selected item is a plantable crop seed
 			var seed_key: StringName = item_id
@@ -224,10 +298,16 @@ func use_active_tool() -> bool:
 	match active_tool:
 		ToolType.HOE:
 			if farm_grid.till_soil(cell):
+				if energy_manager != null:
+					energy_manager.consume_tool_energy(&"vanilla:hoe")
+				_start_tool_animation(&"vanilla:hoe")
 				print("[Player] Tilled soil at %s" % str(cell))
 				return true
 		ToolType.WATERING_CAN:
 			if farm_grid.water_soil(cell):
+				if energy_manager != null:
+					energy_manager.consume_tool_energy(&"vanilla:watering_can")
+				_start_tool_animation(&"vanilla:watering_can")
 				print("[Player] Watered soil at %s" % str(cell))
 				return true
 		ToolType.PARSNIP_SEEDS:
@@ -244,14 +324,59 @@ func use_active_tool() -> bool:
 	return false
 
 func _draw() -> void:
+	var progress: float = clampf(tool_anim_timer / TOOL_ANIM_DURATION, 0.0, 1.0) if is_using_tool else 0.0
+	var lean_offset: Vector2 = Vector2.ZERO
+	if is_using_tool:
+		var swing_progress: float = sin(progress * PI)
+		lean_offset = Vector2(facing_direction.x, facing_direction.y) * (swing_progress * 3.5)
+
 	# Draw player avatar (procedural clean farmer body)
 	# Body
-	draw_circle(Vector2(0, 0), 7.0, Color(0.2, 0.4, 0.8)) # Blue shirt
+	draw_circle(lean_offset + Vector2(0, 0), 7.0, Color(0.2, 0.4, 0.8)) # Blue shirt
 	# Head
-	draw_circle(Vector2(0, -7), 5.0, Color(0.95, 0.8, 0.65)) # Skin
+	draw_circle(lean_offset + Vector2(0, -7), 5.0, Color(0.95, 0.8, 0.65)) # Skin
 	# Hat
-	draw_circle(Vector2(0, -9), 5.5, Color(0.85, 0.7, 0.2)) # Straw hat
+	draw_circle(lean_offset + Vector2(0, -9), 5.5, Color(0.85, 0.7, 0.2)) # Straw hat
 
 	# Facing pointer
-	var pointer_offset: Vector2 = Vector2(facing_direction.x * 9.0, facing_direction.y * 9.0)
+	var pointer_offset: Vector2 = lean_offset + Vector2(facing_direction.x * 9.0, facing_direction.y * 9.0)
 	draw_circle(pointer_offset, 2.0, Color(1.0, 0.9, 0.3))
+
+	# Exhaustion sweat drops
+	if energy_manager != null and energy_manager.is_exhausted:
+		var sweat_color: Color = Color(0.35, 0.7, 1.0, 0.85)
+		draw_circle(lean_offset + Vector2(7, -10), 1.8, sweat_color)
+		draw_circle(lean_offset + Vector2(-7, -9), 1.5, sweat_color)
+
+	# Tool swing animation
+	if is_using_tool:
+		_draw_tool_swing(progress, lean_offset)
+
+func _draw_tool_swing(progress: float, lean_offset: Vector2) -> void:
+	var swing_intensity: float = sin(progress * PI)
+	var reach: float = 8.0 + swing_intensity * 8.0
+	var tool_pos: Vector2 = lean_offset + Vector2(facing_direction.x * reach, facing_direction.y * reach)
+
+	# Draw swing swoosh arc
+	var arc_color: Color = Color(1.0, 1.0, 1.0, 0.4 * (1.0 - progress))
+	draw_arc(lean_offset + Vector2(facing_direction.x * (reach * 0.5), facing_direction.y * (reach * 0.5)), 7.0, 0.0, TAU, 10, arc_color, 1.5)
+
+	# Tool icon or procedural tool
+	var icon: AtlasTexture = ContentRegistry.get_item_icon(animated_tool_id)
+	if icon != null:
+		draw_texture(icon, tool_pos - Vector2(8, 8))
+	else:
+		var handle_color: Color = Color(0.55, 0.35, 0.15)
+		var head_color: Color = Color(0.75, 0.75, 0.8)
+		if animated_tool_id.contains("water"):
+			head_color = Color(0.2, 0.6, 0.9)
+		draw_line(lean_offset, tool_pos, handle_color, 2.0)
+		draw_circle(tool_pos, 3.0, head_color)
+
+	# Action particle: water drop or dirt particle
+	if animated_tool_id.contains("water"):
+		var drop_pos: Vector2 = tool_pos + Vector2(0, 4.0 * swing_intensity)
+		draw_circle(drop_pos, 2.0, Color(0.2, 0.5, 0.9, 0.8))
+	elif animated_tool_id.contains("hoe"):
+		var dirt_pos: Vector2 = tool_pos + Vector2(2.0 * swing_intensity, 2.0)
+		draw_circle(dirt_pos, 2.0, Color(0.45, 0.3, 0.15, 0.8))

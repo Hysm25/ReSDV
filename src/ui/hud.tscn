@@ -72,11 +72,48 @@ grow_horizontal = 2
 grow_vertical = 0
 script = ExtResource("2_hotbar")
 
+[node name="EnergyPanel" type="PanelContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -70.0
+offset_top = -220.0
+offset_right = -16.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="EnergyPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="EnergyLabel" type="Label" parent="EnergyPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "270"
+horizontal_alignment = 1
+
+[node name="EnergyBar" type="ProgressBar" parent="EnergyPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+max_value = 270.0
+value = 270.0
+fill_mode = 3
+show_percentage = false
+
+[node name="StatusLabel" type="Label" parent="EnergyPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Energy"
+horizontal_alignment = 1
+
 [node name="Instructions" type="Label" parent="."]
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 450.0
 offset_bottom = 70.0
-text = "WASD/Arrows: Move | Space/LMB: Use Tool
+text = "WASD/Arrows: Move | Space/LMB: Use Tool | E/RMB: Eat Food
 1-9, 0, -, = / Mouse Wheel / Click: Select Slot
 F1/T: Next Day | F2: +1 Hour"
