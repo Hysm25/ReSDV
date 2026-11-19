@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://btestimporter01"]
+[gd_scene format=3 uid="uid://bvb25df42x14w"]
 
 [ext_resource type="Script" path="res://tests/test_importer.gd" id="1_test_importer"]
 

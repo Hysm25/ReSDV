@@ -15,6 +15,8 @@ const MOVE_SPEED: float = 110.0
 
 @export var farm_grid: FarmGrid = null
 @export var crop_manager: CropManager = null
+@export var map_loader: MapLoader = null
+@export var default_spawn_cell: Vector2i = Vector2i(64, 15)
 
 var active_tool: ToolType = ToolType.HOE
 var facing_direction: Vector2i = Vector2i.DOWN
@@ -25,10 +27,25 @@ var parsnip_seeds_count: int = 15
 var harvest_bag: Dictionary[StringName, int] = {}
 
 func _ready() -> void:
-	# Start in middle of farm grid
-	if farm_grid != null:
+	if map_loader != null:
+		if map_loader.map_size != Vector2i.ZERO:
+			_apply_map_setup()
+		else:
+			map_loader.map_loaded.connect(func(_id: String) -> void: _apply_map_setup())
+	elif farm_grid != null:
 		global_position = farm_grid.cell_to_center_world(Vector2i(farm_grid.grid_width / 2, farm_grid.grid_height / 2))
 	queue_redraw()
+
+func _apply_map_setup() -> void:
+	if map_loader == null:
+		return
+	global_position = map_loader.cell_to_center_world(default_spawn_cell)
+	var cam: Camera2D = get_node_or_null("Camera2D") as Camera2D
+	if cam != null and map_loader.map_size != Vector2i.ZERO:
+		cam.limit_left = 0
+		cam.limit_top = 0
+		cam.limit_right = map_loader.map_size.x * map_loader.tile_size.x
+		cam.limit_bottom = map_loader.map_size.y * map_loader.tile_size.y
 
 func _physics_process(_delta: float) -> void:
 	_handle_movement()

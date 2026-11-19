@@ -24,8 +24,9 @@
 - [x] Implemented Crop Lifecycle system (`src/systems/farming/crop_manager.gd`): renders vanilla crop sprites from `user://vanilla_data/TileSheets/crops.png`, manages phase progression on daily watering, and handles harvest yields.
 - [x] Implemented Player controller (`src/entities/player/`): 8-directional movement, grid targeting, tool selection (Hoe, Watering Can, Parsnip Seeds, Hand), and minimal HUD (`src/ui/hud.tscn`).
 - [x] Assembled playable Vertical Slice (`src/main.tscn`) and verified end-to-end integration via `tests/test_vertical_slice.tscn`.
+- [x] Implemented xTile binary map extraction & Godot 4 `TileMapLayer` rendering: extended importer (`src/importer/extract_assets.py`) to unpack `Farm.xnb` (80x65) and `FarmHouse.xnb` (12x12) into JSON and tilesheet PNGs (`spring_outdoorsTileSheet.png`, `spring_outdoorsTileSheet2.png`, `paths.png`, etc.), built typed `MapLoader` (`src/systems/world/map_loader.gd`) creating `TileMapLayer` nodes per layer (`Back`, `Buildings`, `Paths`, `Front`, `AlwaysFront`, `AlwaysFront2`), generated 160 merged static collision shapes for impassable obstacles, parsed warps/actions, and integrated with `FarmGrid` diggability rules.
 
 ## In Progress / Next Steps
-- [ ] Expand importer for xTile map files (`Maps/*.xnb`) and audio wave banks (`XACT/*.xwb`).
+- [ ] Expand audio pipeline for XACT wave banks (`XACT/*.xwb`).
 - [ ] Implement inventory bag & hotbar system with ItemData textures from `Maps/springobjects.png`.
 - [ ] Implement energy & stamina system and player tool animations.

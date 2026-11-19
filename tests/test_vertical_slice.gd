@@ -148,6 +148,36 @@ func _ready() -> void:
 	assert(not crop_manager.has_crop(action_cell), "Harvested tile should no longer have crop")
 	print("[Test 4] Player interaction loop PASSED.")
 
+	# 5. Test MapLoader + FarmGrid Real Map Integration
+	print("[Test 5] MapLoader + FarmGrid real Farm map integration...")
+	var real_map_loader: MapLoader = MapLoader.new()
+	real_map_loader.auto_load_on_ready = false
+	add_child(real_map_loader)
+	var map_ok: bool = real_map_loader.load_map("user://vanilla_data/Maps/Farm.json")
+	assert(map_ok, "Farm map must load successfully")
+
+	var map_farm_grid: FarmGrid = FarmGrid.new()
+	map_farm_grid.map_loader = real_map_loader
+	add_child(map_farm_grid)
+
+	assert(map_farm_grid.grid_width == 80, "FarmGrid width must sync to MapLoader 80")
+	assert(map_farm_grid.grid_height == 65, "FarmGrid height must sync to MapLoader 65")
+	assert(not map_farm_grid.draw_procedural_background, "Procedural background must be disabled when MapLoader is active")
+
+	# (64, 14) is non-diggable grass/porch
+	assert(not map_farm_grid.till_soil(Vector2i(64, 14)), "Tilling non-diggable grass/porch tile (64, 14) must fail")
+
+	# (64, 18) is diggable dirt in front of farmhouse
+	assert(map_farm_grid.till_soil(Vector2i(64, 18)), "Tilling diggable dirt tile (64, 18) must succeed")
+	assert(map_farm_grid.is_tilled(Vector2i(64, 18)), "Tile (64, 18) must report tilled")
+
+	var map_crop_mgr: CropManager = CropManager.new()
+	map_crop_mgr.farm_grid = map_farm_grid
+	add_child(map_crop_mgr)
+
+	assert(map_crop_mgr.plant_seed(Vector2i(64, 18), &"472"), "Planting Parsnip on real farm tile (64, 18) must succeed")
+	print("[Test 5] MapLoader + FarmGrid real map integration PASSED.")
+
 	print("=======================================================")
 	print("--- ALL VERTICAL SLICE INTEGRATION TESTS PASSED! ---")
 	print("=======================================================")

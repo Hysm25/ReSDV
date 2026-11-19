@@ -14,6 +14,8 @@ const TILE_SIZE: int = 16
 
 @export var grid_width: int = 32
 @export var grid_height: int = 24
+@export var map_loader: MapLoader = null
+@export var draw_procedural_background: bool = true
 
 # Colors for procedural soil representation
 const COLOR_GRASS: Color = Color(0.32, 0.58, 0.28)
@@ -28,15 +30,32 @@ var highlight_cell: Vector2i = Vector2i(-1, -1)
 
 func _ready() -> void:
 	EventBus.day_started.connect(_on_day_started)
+	if map_loader != null:
+		_sync_with_map_loader()
+		if not map_loader.map_loaded.is_connected(_on_map_loaded):
+			map_loader.map_loaded.connect(_on_map_loaded)
 	queue_redraw()
 
+func _sync_with_map_loader() -> void:
+	if map_loader == null:
+		return
+	if map_loader.map_size != Vector2i.ZERO:
+		grid_width = map_loader.map_size.x
+		grid_height = map_loader.map_size.y
+		draw_procedural_background = false
+		queue_redraw()
+
+func _on_map_loaded(_loaded_map_id: String) -> void:
+	_sync_with_map_loader()
+
 func _draw() -> void:
-	# 1. Draw base farm grass terrain
-	for y: int in range(grid_height):
-		for x: int in range(grid_width):
-			var rect: Rect2 = Rect2(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-			var base_color: Color = COLOR_GRASS if ((x + y) % 2 == 0) else COLOR_GRASS_ALT
-			draw_rect(rect, base_color)
+	# 1. Draw base farm grass terrain (only when no map loader is active)
+	if draw_procedural_background:
+		for y: int in range(grid_height):
+			for x: int in range(grid_width):
+				var rect: Rect2 = Rect2(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+				var base_color: Color = COLOR_GRASS if ((x + y) % 2 == 0) else COLOR_GRASS_ALT
+				draw_rect(rect, base_color)
 
 	# 2. Draw tilled and watered soil tiles
 	for cell: Vector2i in _soil_states.keys():
@@ -67,7 +86,16 @@ func cell_to_center_world(cell: Vector2i) -> Vector2:
 	return Vector2(cell.x * TILE_SIZE + (TILE_SIZE / 2.0), cell.y * TILE_SIZE + (TILE_SIZE / 2.0))
 
 func is_in_bounds(cell: Vector2i) -> bool:
+	if map_loader != null and map_loader.map_size != Vector2i.ZERO:
+		return map_loader.is_tile_in_bounds(cell)
 	return cell.x >= 0 and cell.x < grid_width and cell.y >= 0 and cell.y < grid_height
+
+func is_diggable(cell: Vector2i) -> bool:
+	if not is_in_bounds(cell):
+		return false
+	if map_loader != null:
+		return map_loader.is_tile_diggable(cell)
+	return true
 
 func get_soil_state(cell: Vector2i) -> SoilState:
 	return _soil_states.get(cell, SoilState.UNTILLED)
@@ -81,6 +109,8 @@ func is_watered(cell: Vector2i) -> bool:
 
 func till_soil(cell: Vector2i) -> bool:
 	if not is_in_bounds(cell):
+		return false
+	if not is_diggable(cell):
 		return false
 	var current: SoilState = get_soil_state(cell)
 	if current != SoilState.UNTILLED:

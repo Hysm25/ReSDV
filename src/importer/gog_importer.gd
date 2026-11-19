@@ -19,6 +19,10 @@ static func is_vanilla_data_ready() -> bool:
 		VANILLA_DATA_DIR.path_join("TileSheets/crops.png"),
 		VANILLA_DATA_DIR.path_join("TileSheets/tools.png"),
 		VANILLA_DATA_DIR.path_join("Maps/springobjects.png"),
+		VANILLA_DATA_DIR.path_join("Maps/Farm.json"),
+		VANILLA_DATA_DIR.path_join("Maps/FarmHouse.json"),
+		VANILLA_DATA_DIR.path_join("Maps/spring_outdoorsTileSheet.png"),
+		VANILLA_DATA_DIR.path_join("Maps/spring_outdoorsTileSheet2.png"),
 	]
 	
 	for file_path: String in required_files:

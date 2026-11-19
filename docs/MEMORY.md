@@ -46,4 +46,11 @@ updated: 2026-11-19
   - `Player` (`src/entities/player/player.gd`): 8-directional movement, grid targeting, tool actions (Hoe, Watering Can, Parsnip Seeds, Hand).
   - `HUD` (`src/ui/hud.gd`): displays time, calendar, active tool, and harvested items.
   - All test suites passed: `tests/test_core.tscn`, `tests/test_importer.tscn`, `tests/test_vertical_slice.tscn`, and headless main scene.
-- Next immediate task: Expand importer for xTile map files (`Maps/*.xnb`) and audio wave banks (`XACT/*.xwb`).
+- Real xTile map extraction and Godot 4 `TileMapLayer` rendering implemented & verified:
+  - Extractor (`src/importer/extract_assets.py`) reverse engineered and parses xTile `tBIN10` binary format from `Maps/Farm.xnb` and `Maps/FarmHouse.xnb` into JSON with layer definitions, tile sheets, animated tiles, and tile properties (`Diggable`, `Passable`, `Warp`, `Action`).
+  - Extracted referenced seasonal tilesheet textures to standard PNGs (`Maps/spring_outdoorsTileSheet.png`, `Maps/spring_outdoorsTileSheet2.png`, `Maps/spring_outdoorTileSheet_extra.png`, `Maps/paths.png`, etc.) in `user://vanilla_data/Maps/`.
+  - Built typed `MapLoader` (`src/systems/world/map_loader.gd`) creating Godot 4 `TileMapLayer` nodes per layer (`Back`, `Buildings`, `Paths`, `Front`, `AlwaysFront`, `AlwaysFront2`), generating 160 merged static collision shapes for impassable obstacles on `Buildings`, parsing warps, and tracking diggable/action tiles.
+  - Integrated `FarmGrid` with `MapLoader`: 80x65 grid dimension sync, procedural background disabling when real map is loaded, and diggability enforcement (`is_tile_diggable`) allowing tilling only on authentic diggable dirt (e.g. `(64, 18)`).
+  - Integrated `Player` with `MapLoader`: automatic spawn at Farmhouse entrance `(64, 15)` and camera bounds clipping to farm dimensions (1280x1040).
+  - Verified with test suites (`tests/test_map_loader.tscn`, `tests/test_vertical_slice.tscn`) and headless `main.tscn`.
+- Next immediate task: Expand audio pipeline for XACT wave banks (`XACT/*.xwb`) and sound bank (`Sound Bank.xsb`).

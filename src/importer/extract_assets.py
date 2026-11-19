@@ -441,6 +441,210 @@ def extract_objects(dec_path: str, strings_map: dict[str, str]) -> dict[str, dic
     return objects
 
 
+def extract_map(dec_path: str, default_name: str = "") -> dict:
+    with open(dec_path, "rb") as f:
+        data = f.read()
+
+    idx = data.find(b"tBIN10")
+    if idx == -1:
+        raise ValueError(f"No tBIN10 header found in {dec_path}")
+    sub = data[idx:]
+    p = 6  # skip tBIN10
+
+    def read_str(pos: int) -> tuple[str, int]:
+        slen = struct.unpack_from("<I", sub, pos)[0]
+        pos += 4
+        if slen == 0:
+            return "", pos
+        return sub[pos : pos + slen].decode("utf-8", errors="replace"), pos + slen
+
+    def read_props(pos: int) -> tuple[dict, int]:
+        cnt = struct.unpack_from("<I", sub, pos)[0]
+        pos += 4
+        props = {}
+        for _ in range(cnt):
+            k, pos = read_str(pos)
+            ptype = sub[pos]
+            pos += 1
+            if ptype == 0:
+                val = sub[pos] != 0
+                pos += 1
+            elif ptype in (1, 2):
+                val = struct.unpack_from("<i", sub, pos)[0]
+                pos += 4
+            else:
+                val, pos = read_str(pos)
+            props[k] = val
+        return props, pos
+
+    map_id, p = read_str(p)
+    if not map_id or map_id == "Untitled":
+        map_id = default_name
+    map_desc, p = read_str(p)
+    map_props, p = read_props(p)
+
+    num_sheets = struct.unpack_from("<I", sub, p)[0]
+    p += 4
+    tile_sheets = []
+    for _ in range(num_sheets):
+        ts_id, p = read_str(p)
+        ts_desc, p = read_str(p)
+        ts_image, p = read_str(p)
+        w, h, tw, th, mw, mh, sw, sh = struct.unpack_from("<8i", sub, p)
+        p += 32
+        sheet_props, p = read_props(p)
+
+        tile_properties = {}
+        cleaned_sheet_props = {}
+        for k, v in sheet_props.items():
+            if k.startswith("@TileIndex@"):
+                parts = k.split("@")
+                if len(parts) >= 4:
+                    t_idx_str = parts[2]
+                    p_name = parts[3]
+                    if t_idx_str not in tile_properties:
+                        tile_properties[t_idx_str] = {}
+                    tile_properties[t_idx_str][p_name] = v
+            else:
+                cleaned_sheet_props[k] = v
+
+        norm_image = ts_image.replace("\\", "/").split("/")[-1]
+        tile_sheets.append({
+            "id": ts_id,
+            "description": ts_desc,
+            "image": ts_image,
+            "texture_file": f"{norm_image}.png",
+            "texture_path": f"Maps/{norm_image}.png",
+            "width": w,
+            "height": h,
+            "tile_width": tw,
+            "tile_height": th,
+            "margin_width": mw,
+            "margin_height": mh,
+            "spacing_width": sw,
+            "spacing_height": sh,
+            "properties": cleaned_sheet_props,
+            "tile_properties": tile_properties,
+        })
+
+    num_layers = struct.unpack_from("<I", sub, p)[0]
+    p += 4
+    layers = []
+    map_w = 0
+    map_h = 0
+    map_tw = 16
+    map_th = 16
+
+    for _ in range(num_layers):
+        l_id, p = read_str(p)
+        l_vis = sub[p] != 0
+        p += 1
+        l_desc, p = read_str(p)
+        lw, lh, ltw, lth = struct.unpack_from("<4i", sub, p)
+        p += 16
+        l_props, p = read_props(p)
+        if lw > map_w:
+            map_w = lw
+        if lh > map_h:
+            map_h = lh
+        map_tw = ltw
+        map_th = lth
+
+        total_tiles = lw * lh
+        tile_count = 0
+        cur_sheet = ""
+        tiles = []
+
+        while tile_count < total_tiles:
+            cmd = chr(sub[p])
+            p += 1
+            if cmd == "T":
+                cur_sheet, p = read_str(p)
+            elif cmd == "N":
+                null_cnt = struct.unpack_from("<I", sub, p)[0]
+                p += 4
+                tile_count += null_cnt
+            elif cmd == "S":
+                t_idx = struct.unpack_from("<i", sub, p)[0]
+                p += 4
+                blend = sub[p]
+                p += 1
+                t_props, p = read_props(p)
+                x = tile_count % lw
+                y = tile_count // lw
+                tile_obj = {"x": x, "y": y, "sheet": cur_sheet, "index": t_idx}
+                if blend != 0:
+                    tile_obj["blend"] = blend
+                if t_props:
+                    tile_obj["props"] = t_props
+                tiles.append(tile_obj)
+                tile_count += 1
+            elif cmd == "A":
+                interval = struct.unpack_from("<i", sub, p)[0]
+                p += 4
+                frame_cnt = struct.unpack_from("<i", sub, p)[0]
+                p += 4
+                frames = []
+                for _ in range(frame_cnt):
+                    c = chr(sub[p])
+                    p += 1
+                    if c == "T":
+                        cur_sheet, p = read_str(p)
+                        c = chr(sub[p])
+                        p += 1
+                    f_idx = struct.unpack_from("<i", sub, p)[0]
+                    p += 4
+                    f_blend = sub[p]
+                    p += 1
+                    f_props, p = read_props(p)
+                    f_obj = {"sheet": cur_sheet, "index": f_idx}
+                    if f_blend != 0:
+                        f_obj["blend"] = f_blend
+                    if f_props:
+                        f_obj["props"] = f_props
+                    frames.append(f_obj)
+                anim_props, p = read_props(p)
+                x = tile_count % lw
+                y = tile_count // lw
+                default_frame_idx = frames[0]["index"] if frames else 0
+                tile_obj = {
+                    "x": x,
+                    "y": y,
+                    "sheet": cur_sheet,
+                    "index": default_frame_idx,
+                    "animated": True,
+                    "interval": interval,
+                    "frames": frames,
+                }
+                if anim_props:
+                    tile_obj["props"] = anim_props
+                tiles.append(tile_obj)
+                tile_count += 1
+
+        layers.append({
+            "id": l_id,
+            "visible": l_vis,
+            "width": lw,
+            "height": lh,
+            "tile_width": ltw,
+            "tile_height": lth,
+            "properties": l_props,
+            "tiles": tiles,
+        })
+
+    print(f"[Map] Extracted map '{map_id}' ({map_w}x{map_h}) with {len(layers)} layers and {len(tile_sheets)} tile sheets.")
+    return {
+        "id": map_id,
+        "width": map_w,
+        "height": map_h,
+        "tile_width": map_tw,
+        "tile_height": map_th,
+        "properties": map_props,
+        "tile_sheets": tile_sheets,
+        "layers": layers,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Extract vanilla Stardew Valley assets into user://vanilla_data/")
     parser.add_argument("--content-dir", default=DEFAULT_CONTENT_PATH, help="Path to Stardew Valley Content directory")
@@ -467,6 +671,16 @@ def main() -> int:
         "TileSheets/crops.xnb",
         "TileSheets/tools.xnb",
         "Maps/springobjects.xnb",
+        # Maps & Tilesheets
+        "Maps/Farm.xnb",
+        "Maps/FarmHouse.xnb",
+        "Maps/spring_outdoorsTileSheet.xnb",
+        "Maps/spring_outdoorsTileSheet2.xnb",
+        "Maps/spring_outdoorTileSheet_extra.xnb",
+        "Maps/paths.xnb",
+        "Maps/townInterior.xnb",
+        "Maps/farmhouse_tiles.xnb",
+        "Maps/walls_and_floors.xnb",
     ]
 
     # Step 1: Validate MD5 hashes
@@ -517,15 +731,34 @@ def main() -> int:
     extract_texture(dec_files["TileSheets/crops.xnb"], os.path.join(output_dir, "TileSheets/crops.png"))
     extract_texture(dec_files["TileSheets/tools.xnb"], os.path.join(output_dir, "TileSheets/tools.png"))
     extract_texture(dec_files["Maps/springobjects.xnb"], os.path.join(output_dir, "Maps/springobjects.png"))
+    extract_texture(dec_files["Maps/spring_outdoorsTileSheet.xnb"], os.path.join(output_dir, "Maps/spring_outdoorsTileSheet.png"))
+    extract_texture(dec_files["Maps/spring_outdoorsTileSheet2.xnb"], os.path.join(output_dir, "Maps/spring_outdoorsTileSheet2.png"))
+    extract_texture(dec_files["Maps/spring_outdoorTileSheet_extra.xnb"], os.path.join(output_dir, "Maps/spring_outdoorTileSheet_extra.png"))
+    extract_texture(dec_files["Maps/paths.xnb"], os.path.join(output_dir, "Maps/paths.png"))
+    extract_texture(dec_files["Maps/townInterior.xnb"], os.path.join(output_dir, "Maps/townInterior.png"))
+    extract_texture(dec_files["Maps/farmhouse_tiles.xnb"], os.path.join(output_dir, "Maps/farmhouse_tiles.png"))
+    extract_texture(dec_files["Maps/walls_and_floors.xnb"], os.path.join(output_dir, "Maps/walls_and_floors.png"))
 
-    # Step 8: Cleanup temp
+    # Step 8: Extract Maps
+    maps_dir = os.path.join(output_dir, "Maps")
+    os.makedirs(maps_dir, exist_ok=True)
+    farm_map = extract_map(dec_files["Maps/Farm.xnb"], "Farm")
+    with open(os.path.join(maps_dir, "Farm.json"), "w", encoding="utf-8") as f:
+        json.dump(farm_map, f, indent=2, ensure_ascii=False)
+
+    farmhouse_map = extract_map(dec_files["Maps/FarmHouse.xnb"], "FarmHouse")
+    with open(os.path.join(maps_dir, "FarmHouse.json"), "w", encoding="utf-8") as f:
+        json.dump(farmhouse_map, f, indent=2, ensure_ascii=False)
+
+    # Step 9: Cleanup temp
     import shutil
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     print(f"[Done] Extraction complete! Vanilla assets written to: {output_dir}")
     print(f"  - Objects: {len(objects_map)} in Objects.json")
     print(f"  - Crops: {len(crops_map)} in Crops.json")
-    print(f"  - Textures: crops.png, tools.png, springobjects.png")
+    print(f"  - Maps: Farm.json, FarmHouse.json in Maps/")
+    print(f"  - Textures: crops, tools, springobjects, and all map tilesheets in Maps/ and TileSheets/")
     return 0
 
 
