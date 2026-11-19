@@ -91,4 +91,10 @@ updated: 2026-11-19
   - Built `NPCManager` (`src/systems/npc/npc_manager.gd`) coordinating NPC schedules on time ticks, handling cross-location visibility/collisions, and managing player conversations.
   - Built `DialogueBoxUI` modal (`src/ui/dialogue_box_ui.tscn`, `src/ui/dialogue_box_ui.gd`) rendering 64x64 cropped emotion portraits, villager nameplate, wrapped dialogue text, and page advance triggers.
   - Verified with automated test suite `tests/test_npc.tscn` and full engine regression test suite.
-- Next immediate task: Implement foraging / debris clearing (chopping branches, breaking rocks, cutting grass). (Fallback: `~/.ai-context/MEMORY.md`)
+- Foraging & Debris Clearing system implemented & verified:
+  - Extended importer pipeline (`src/importer/extract_assets.py`) to unpack `TerrainFeatures/grass.xnb` into `user://vanilla_data/TerrainFeatures/grass.png` (66x240) and added `ContentRegistry.get_grass_texture()`.
+  - Built `DebrisObject` (`src/entities/objects/debris_object.gd`) supporting Twigs (294, 295), Stones (32, 34, 343), Weeds (0, 313, 314, 315), Wild Grass (4 seasonal tuft variations), and Spring Forageables (Wild Horseradish `vanilla:16`, Daffodil `vanilla:18`, Leek `vanilla:20`, Dandelion `vanilla:22`) with authentic sprite atlas rendering, directional tool shake feedback, and physical obstacle collision (`StaticBody2D` + `CollisionShape2D`).
+  - Built `DebrisManager` (`src/systems/world/debris_manager.gd`) coordinating tool interaction checks (Axe -> Wood `vanilla:388` + `axchop`, Pickaxe -> Stone `vanilla:390` + `hammer`, Scythe -> Fiber `vanilla:771` / Hay `vanilla:178` + `cut`), stamina deduction (2.0 for tools, 0.0 for scythe/hand), ineffective tool deflection, forage pickup (`pickUpItem`), starter debris generator (`spawn_initial_farm_debris`), and cross-location persistence across `Farm` <-> `FarmHouse`.
+  - Integrated with `Player` (`src/entities/player/player.gd`) and `FarmGrid` (`src/systems/world/farm_grid.gd`) enforcing that untilled dirt cannot be tilled if occupied by debris.
+  - Verified with automated test suite `tests/test_debris.tscn` and full engine regression test suite.
+- Next immediate task: Implement fishing minigame and water body interactions. (Fallback: `~/.ai-context/MEMORY.md`)

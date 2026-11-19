@@ -12,6 +12,7 @@ var _crops: Dictionary[StringName, CropData] = {}
 var _springobjects_texture: Texture2D = null
 var _tools_texture: Texture2D = null
 var _craftables_texture: Texture2D = null
+var _grass_texture: Texture2D = null
 var _icon_cache: Dictionary[StringName, AtlasTexture] = {}
 
 func _ready() -> void:
@@ -80,6 +81,16 @@ func get_craftables_texture() -> Texture2D:
 			if img != null and not img.is_empty():
 				_craftables_texture = ImageTexture.create_from_image(img)
 	return _craftables_texture
+
+func get_grass_texture() -> Texture2D:
+	if _grass_texture == null:
+		var path: String = VANILLA_DATA_DIR.path_join("TerrainFeatures/grass.png")
+		if FileAccess.file_exists(path):
+			var abs_path: String = ProjectSettings.globalize_path(path)
+			var img: Image = Image.load_from_file(abs_path)
+			if img != null and not img.is_empty():
+				_grass_texture = ImageTexture.create_from_image(img)
+	return _grass_texture
 
 func get_item_icon(id: StringName) -> AtlasTexture:
 	var namespaced_id: StringName = ensure_namespaced(id)

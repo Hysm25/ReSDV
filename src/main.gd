@@ -7,6 +7,7 @@ const GOGImporter = preload("res://src/importer/gog_importer.gd")
 @onready var audio_manager: AudioManager = $AudioManager
 @onready var energy_manager: EnergyManager = $EnergyManager
 @onready var chest_manager: ChestManager = $ChestManager
+@onready var debris_manager: DebrisManager = $DebrisManager
 @onready var chest_ui: ChestUI = $ChestUI
 @onready var npc_manager: NPCManager = $NPCManager
 @onready var dialogue_ui: DialogueBoxUI = $DialogueBoxUI
@@ -30,6 +31,9 @@ func _ready() -> void:
 
 	if location_manager != null and location_manager.locations.is_empty():
 		location_manager.initialize_locations()
+
+	if debris_manager != null:
+		debris_manager.spawn_initial_farm_debris()
 
 	if hud != null and inventory_manager != null:
 		hud.bind_inventory(inventory_manager)

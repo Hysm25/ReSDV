@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://b00main000001"]
+[gd_scene load_steps=16 format=3 uid="uid://b00main000001"]
 
 [ext_resource type="Script" path="res://src/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/systems/time/time_manager.gd" id="2_time_manager"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://src/ui/chest_ui.tscn" id="12_chest_ui"]
 [ext_resource type="Script" path="res://src/systems/npc/npc_manager.gd" id="13_npc_mgr"]
 [ext_resource type="PackedScene" path="res://src/ui/dialogue_box_ui.tscn" id="14_dialogue_ui"]
+[ext_resource type="Script" path="res://src/systems/world/debris_manager.gd" id="15_debris_mgr"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -33,6 +34,9 @@ script = ExtResource("10_energy_mgr")
 [node name="ChestManager" type="Node2D" parent="."]
 script = ExtResource("11_chest_mgr")
 
+[node name="DebrisManager" type="Node2D" parent="."]
+script = ExtResource("15_debris_mgr")
+
 [node name="NPCManager" type="Node2D" parent="." node_paths=PackedStringArray("dialogue_ui")]
 script = ExtResource("13_npc_mgr")
 dialogue_ui = NodePath("../DialogueBoxUI")
@@ -43,14 +47,15 @@ player = NodePath("../Player")
 farm_grid = NodePath("../FarmGrid")
 crop_manager = NodePath("../CropManager")
 
-[node name="FarmGrid" type="Node2D" parent="."]
+[node name="FarmGrid" type="Node2D" parent="." node_paths=PackedStringArray("debris_manager")]
 script = ExtResource("4_farm_grid")
+debris_manager = NodePath("../DebrisManager")
 
 [node name="CropManager" type="Node2D" parent="." node_paths=PackedStringArray("farm_grid")]
 script = ExtResource("5_crop_manager")
 farm_grid = NodePath("../FarmGrid")
 
-[node name="Player" parent="." node_paths=PackedStringArray("farm_grid", "crop_manager", "location_manager", "inventory_manager", "energy_manager", "chest_manager", "chest_ui", "npc_manager", "dialogue_ui") instance=ExtResource("6_player")]
+[node name="Player" parent="." node_paths=PackedStringArray("farm_grid", "crop_manager", "location_manager", "inventory_manager", "energy_manager", "chest_manager", "chest_ui", "npc_manager", "dialogue_ui", "debris_manager") instance=ExtResource("6_player")]
 farm_grid = NodePath("../FarmGrid")
 crop_manager = NodePath("../CropManager")
 location_manager = NodePath("../LocationManager")
@@ -60,6 +65,7 @@ chest_manager = NodePath("../ChestManager")
 chest_ui = NodePath("../ChestUI")
 npc_manager = NodePath("../NPCManager")
 dialogue_ui = NodePath("../DialogueBoxUI")
+debris_manager = NodePath("../DebrisManager")
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 zoom = Vector2(2.5, 2.5)

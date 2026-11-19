@@ -839,6 +839,7 @@ def main() -> int:
         "TileSheets/crops.xnb",
         "TileSheets/tools.xnb",
         "TileSheets/Craftables.xnb",
+        "TerrainFeatures/grass.xnb",
         "Maps/springobjects.xnb",
         # Maps & Tilesheets
         "Maps/Farm.xnb",
@@ -912,6 +913,10 @@ def main() -> int:
         json.dump(objects_map, f, indent=2, ensure_ascii=False)
 
     # Step 7: Extract Textures
+    terrain_dir = os.path.join(output_dir, "TerrainFeatures")
+    os.makedirs(terrain_dir, exist_ok=True)
+    extract_texture(dec_files["TerrainFeatures/grass.xnb"], os.path.join(terrain_dir, "grass.png"))
+
     extract_texture(dec_files["TileSheets/crops.xnb"], os.path.join(output_dir, "TileSheets/crops.png"))
     extract_texture(dec_files["TileSheets/tools.xnb"], os.path.join(output_dir, "TileSheets/tools.png"))
     extract_texture(dec_files["TileSheets/Craftables.xnb"], os.path.join(output_dir, "TileSheets/Craftables.png"))

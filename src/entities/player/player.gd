@@ -25,6 +25,7 @@ const TOOL_ANIM_DURATION: float = 0.22
 @export var chest_ui: ChestUI = null
 @export var npc_manager: NPCManager = null
 @export var dialogue_ui: DialogueBoxUI = null
+@export var debris_manager: DebrisManager = null
 @export var default_spawn_cell: Vector2i = Vector2i(64, 15)
 
 var active_tool: ToolType = ToolType.HOE
@@ -78,7 +79,14 @@ func _ready() -> void:
 				var hud_node: Node = parent_node.get_node_or_null("HUD")
 				if hud_node != null:
 					dialogue_ui = hud_node.get_node_or_null("DialogueBoxUI") as DialogueBoxUI
-	
+
+	if debris_manager == null:
+		var parent_node: Node = get_parent()
+		if parent_node != null:
+			debris_manager = parent_node.get_node_or_null("DebrisManager") as DebrisManager
+		if debris_manager == null:
+			debris_manager = get_node_or_null("DebrisManager") as DebrisManager
+
 	if energy_manager != null:
 		energy_manager.exhaustion_changed.connect(func(_ex: bool) -> void: queue_redraw())
 
@@ -328,7 +336,25 @@ func use_active_tool() -> bool:
 			print("[Player] Cannot place chest at %s!" % str(cell))
 			return false
 
-	# 3. Location and FarmGrid restrictions for farming actions
+	# 3. Check for Foraging / Debris interaction
+	if debris_manager != null and debris_manager.has_debris_at(cur_loc, cell):
+		var debris_obj: DebrisObject = debris_manager.get_debris_at(cur_loc, cell)
+		if debris_obj != null and debris_obj.is_forage():
+			return debris_manager.pickup_forage(cur_loc, cell, inventory_manager)
+
+		var active_tool_id: StringName = get_selected_item_id()
+		if active_tool_id == &"vanilla:axe" or active_tool_id == &"vanilla:pickaxe" or active_tool_id == &"vanilla:scythe" or active_tool_id == &"vanilla:hoe":
+			if energy_manager != null and not energy_manager.can_use_tool():
+				print("[Player] Too exhausted to use tool on debris!")
+				return false
+			_start_tool_animation(active_tool_id)
+			return debris_manager.hit_debris(cur_loc, cell, active_tool_id, inventory_manager, energy_manager)
+		else:
+			if debris_obj != null:
+				debris_obj.shake()
+			return false
+
+	# 4. Location and FarmGrid restrictions for farming actions
 	if farm_grid == null or not farm_grid.visible:
 		return false
 	if location_manager != null and location_manager.current_location_id != &"Farm":
@@ -337,7 +363,7 @@ func use_active_tool() -> bool:
 		print("[Player] Cannot use tool: completely exhausted / passed out!")
 		return false
 
-	# 4. Check for mature harvest first
+	# 5. Check for mature harvest first
 	if crop_manager != null and crop_manager.is_mature(cell):
 		var harvest_res: Dictionary = crop_manager.harvest_crop(cell)
 		if harvest_res.get("success", false):
@@ -411,7 +437,10 @@ func use_active_tool() -> bool:
 				print("[Player] Planted Parsnip Seed at %s (Remaining: %d)" % [str(cell), parsnip_seeds_count])
 				return true
 		ToolType.HAND:
-			pass
+			if debris_manager != null and debris_manager.has_debris_at(cur_loc, cell):
+				var d_obj: DebrisObject = debris_manager.get_debris_at(cur_loc, cell)
+				if d_obj != null and d_obj.is_forage():
+					return debris_manager.pickup_forage(cur_loc, cell, null)
 
 	return false
 

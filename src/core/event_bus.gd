@@ -41,6 +41,10 @@ signal dialogue_ended(speaker_name: StringName)
 signal npc_moved(npc_name: StringName, location_id: StringName, cell: Vector2i)
 signal npc_schedule_point_reached(npc_name: StringName, point_index: int, point: Dictionary)
 
+# World, Debris & Forage
+signal debris_cleared(location_id: StringName, cell: Vector2i, debris_type: int, yield_item_id: StringName, count: int)
+signal forage_collected(location_id: StringName, cell: Vector2i, item_id: StringName, count: int)
+
 # Content Registry & Data Ingestion
 signal content_registered(category: StringName, id: StringName)
 signal content_loading_started()

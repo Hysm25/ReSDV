@@ -15,6 +15,7 @@ const TILE_SIZE: int = 16
 @export var grid_width: int = 32
 @export var grid_height: int = 24
 @export var map_loader: MapLoader = null
+@export var debris_manager: DebrisManager = null
 @export var draw_procedural_background: bool = true
 
 # Colors for procedural soil representation
@@ -111,6 +112,8 @@ func till_soil(cell: Vector2i) -> bool:
 	if not is_in_bounds(cell):
 		return false
 	if not is_diggable(cell):
+		return false
+	if debris_manager != null and debris_manager.has_debris_at(&"Farm", cell):
 		return false
 	var current: SoilState = get_soil_state(cell)
 	if current != SoilState.UNTILLED:

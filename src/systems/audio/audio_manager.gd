@@ -45,6 +45,8 @@ func _connect_event_bus() -> void:
 	EventBus.chest_closed.connect(func(_ch: Node) -> void: play_cue(&"doorClose"))
 	EventBus.chest_placed.connect(func(_cell: Vector2i, _ch: Node) -> void: play_cue(&"woodyStep"))
 	EventBus.chest_removed.connect(func(_cell: Vector2i) -> void: play_cue(&"axchop"))
+	EventBus.debris_cleared.connect(_on_debris_cleared)
+	EventBus.forage_collected.connect(func(_loc: StringName, _cell: Vector2i, _id: StringName, _cnt: int) -> void: play_cue(&"pickUpItem"))
 
 
 func load_all_cues() -> void:
@@ -201,3 +203,18 @@ func _on_location_changed(from_map: StringName, to_map: StringName, _target_cell
 
 func _on_item_selected(_slot_index: int, _item_id: StringName) -> void:
 	play_cue(&"toolSwap")
+
+
+func _on_debris_cleared(_location_id: StringName, _cell: Vector2i, debris_type: int, _yield_item_id: StringName, _count: int) -> void:
+	# 0 = WEED, 1 = TWIG, 2 = STONE, 3 = GRASS
+	match debris_type:
+		0:
+			play_cue(&"cut")
+		1:
+			play_cue(&"axchop")
+		2:
+			play_cue(&"hammer")
+		3:
+			play_cue(&"cut")
+		_:
+			play_cue(&"cut")
