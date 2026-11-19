@@ -1,0 +1,79 @@
+[gd_scene load_steps=2 format=3 uid="uid://chestui001"]
+
+[ext_resource type="Script" path="res://src/ui/chest_ui.gd" id="1_chest_ui"]
+
+[node name="ChestUI" type="CanvasLayer"]
+layer = 10
+visible = false
+script = ExtResource("1_chest_ui")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainPanel" type="PanelContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/MainPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ChestSection" type="VBoxContainer" parent="CenterContainer/MainPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="CenterContainer/MainPanel/VBox/ChestSection"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/MainPanel/VBox/ChestSection/Header"]
+layout_mode = 2
+text = "Chest"
+
+[node name="Spacer" type="Control" parent="CenterContainer/MainPanel/VBox/ChestSection/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OrganizeButton" type="Button" parent="CenterContainer/MainPanel/VBox/ChestSection/Header"]
+layout_mode = 2
+text = "Organize"
+
+[node name="CloseButton" type="Button" parent="CenterContainer/MainPanel/VBox/ChestSection/Header"]
+layout_mode = 2
+text = " X "
+
+[node name="ChestGrid" type="GridContainer" parent="CenterContainer/MainPanel/VBox/ChestSection"]
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 12
+
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/MainPanel/VBox"]
+layout_mode = 2
+
+[node name="PlayerSection" type="VBoxContainer" parent="CenterContainer/MainPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="InvHeader" type="HBoxContainer" parent="CenterContainer/MainPanel/VBox/PlayerSection"]
+layout_mode = 2
+
+[node name="InvLabel" type="Label" parent="CenterContainer/MainPanel/VBox/PlayerSection/InvHeader"]
+layout_mode = 2
+text = "Inventory"
+
+[node name="PlayerGrid" type="GridContainer" parent="CenterContainer/MainPanel/VBox/PlayerSection"]
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 12

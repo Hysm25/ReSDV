@@ -41,6 +41,10 @@ func _connect_event_bus() -> void:
 	EventBus.crop_harvested.connect(_on_crop_harvested)
 	EventBus.location_changed.connect(_on_location_changed)
 	EventBus.item_selected.connect(_on_item_selected)
+	EventBus.chest_opened.connect(func(_ch: Node) -> void: play_cue(&"openBox"))
+	EventBus.chest_closed.connect(func(_ch: Node) -> void: play_cue(&"doorClose"))
+	EventBus.chest_placed.connect(func(_cell: Vector2i, _ch: Node) -> void: play_cue(&"woodyStep"))
+	EventBus.chest_removed.connect(func(_cell: Vector2i) -> void: play_cue(&"axchop"))
 
 
 func load_all_cues() -> void:

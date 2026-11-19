@@ -6,8 +6,10 @@ extends Node
 
 signal slot_changed(slot_index: int, slot: InventorySlot)
 signal active_slot_changed(slot_index: int, slot: InventorySlot)
+signal capacity_changed(new_capacity: int)
 
 const DEFAULT_HOTBAR_SIZE: int = 12
+const MAX_BACKPACK_CAPACITY: int = 36
 
 @export var total_slots: int = DEFAULT_HOTBAR_SIZE
 @export var selected_slot_index: int = 0
@@ -27,9 +29,38 @@ func _exit_tree() -> void:
 		EventBus.crop_harvested.disconnect(_on_crop_harvested)
 
 func _init_slots() -> void:
-	if slots.size() < total_slots:
-		for i: int in range(slots.size(), total_slots):
-			slots.append(InventorySlot.new())
+	while slots.size() < total_slots:
+		slots.append(InventorySlot.new())
+
+func can_expand() -> bool:
+	return total_slots < MAX_BACKPACK_CAPACITY
+
+func upgrade_capacity(new_capacity: int) -> bool:
+	if new_capacity <= total_slots:
+		return false
+	var target_cap: int = mini(new_capacity, MAX_BACKPACK_CAPACITY)
+	total_slots = target_cap
+	_init_slots()
+	capacity_changed.emit(total_slots)
+	if is_instance_valid(EventBus):
+		EventBus.inventory_capacity_changed.emit(total_slots)
+	print("[InventoryManager] Inventory capacity upgraded to %d slots!" % total_slots)
+	return true
+
+func cycle_hotbar_row() -> void:
+	if total_slots <= DEFAULT_HOTBAR_SIZE:
+		return
+	# Rotate rows of 12 cyclically (e.g. Row 1 -> Row 2 -> Row 3 -> Row 1)
+	var first_row: Array[InventorySlot] = slots.slice(0, DEFAULT_HOTBAR_SIZE)
+	var remaining: Array[InventorySlot] = slots.slice(DEFAULT_HOTBAR_SIZE)
+	slots = remaining + first_row
+	for i: int in range(slots.size()):
+		slot_changed.emit(i, slots[i])
+		if is_instance_valid(EventBus):
+			EventBus.inventory_changed.emit(i, slots[i].item_id, slots[i].count)
+	active_slot_changed.emit(selected_slot_index, get_selected_slot())
+	if is_instance_valid(EventBus):
+		EventBus.item_selected.emit(selected_slot_index, get_selected_item_id())
 
 func is_all_empty() -> bool:
 	for slot: InventorySlot in slots:
@@ -155,18 +186,25 @@ func remove_item(item_id: StringName, count: int = 1) -> bool:
 
 func select_slot(slot_index: int) -> void:
 	_init_slots()
-	var new_index: int = clampi(slot_index, 0, slots.size() - 1)
+	var hotbar_max: int = mini(slots.size(), DEFAULT_HOTBAR_SIZE) - 1
+	var new_index: int = clampi(slot_index, 0, max(hotbar_max, 0))
 	selected_slot_index = new_index
 	var current_slot: InventorySlot = get_selected_slot()
 	active_slot_changed.emit(new_index, current_slot)
 	EventBus.item_selected.emit(new_index, get_selected_item_id())
 
 func select_next_slot() -> void:
-	var next_idx: int = (selected_slot_index + 1) % slots.size()
+	var hotbar_len: int = mini(slots.size(), DEFAULT_HOTBAR_SIZE)
+	if hotbar_len <= 0:
+		return
+	var next_idx: int = (selected_slot_index + 1) % hotbar_len
 	select_slot(next_idx)
 
 func select_previous_slot() -> void:
-	var prev_idx: int = (selected_slot_index - 1 + slots.size()) % slots.size()
+	var hotbar_len: int = mini(slots.size(), DEFAULT_HOTBAR_SIZE)
+	if hotbar_len <= 0:
+		return
+	var prev_idx: int = (selected_slot_index - 1 + hotbar_len) % hotbar_len
 	select_slot(prev_idx)
 
 func swap_slots(index_a: int, index_b: int) -> bool:

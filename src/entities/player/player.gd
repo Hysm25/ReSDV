@@ -21,6 +21,8 @@ const TOOL_ANIM_DURATION: float = 0.22
 @export var location_manager: LocationManager = null
 @export var inventory_manager: InventoryManager = null
 @export var energy_manager: EnergyManager = null
+@export var chest_manager: ChestManager = null
+@export var chest_ui: ChestUI = null
 @export var default_spawn_cell: Vector2i = Vector2i(64, 15)
 
 var active_tool: ToolType = ToolType.HOE
@@ -44,6 +46,22 @@ func _ready() -> void:
 			energy_manager = parent_node.get_node_or_null("EnergyManager") as EnergyManager
 		if energy_manager == null:
 			energy_manager = get_node_or_null("EnergyManager") as EnergyManager
+
+	if chest_manager == null:
+		var parent_node: Node = get_parent()
+		if parent_node != null:
+			chest_manager = parent_node.get_node_or_null("ChestManager") as ChestManager
+		if chest_manager == null:
+			chest_manager = get_node_or_null("ChestManager") as ChestManager
+
+	if chest_ui == null:
+		var parent_node: Node = get_parent()
+		if parent_node != null:
+			chest_ui = parent_node.get_node_or_null("ChestUI") as ChestUI
+			if chest_ui == null:
+				var hud_node: Node = parent_node.get_node_or_null("HUD")
+				if hud_node != null:
+					chest_ui = hud_node.get_node_or_null("ChestUI") as ChestUI
 	
 	if energy_manager != null:
 		energy_manager.exhaustion_changed.connect(func(_ex: bool) -> void: queue_redraw())
@@ -150,6 +168,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif (event is InputEventKey and event.is_pressed() and not event.is_echo() and event.keycode == KEY_E) \
 		or (event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_RIGHT):
 		try_eat_selected_item()
+	# Hotbar row cycle via TAB
+	elif event is InputEventKey and event.is_pressed() and not event.is_echo() and event.keycode == KEY_TAB:
+		if inventory_manager != null and inventory_manager.total_slots > 12:
+			inventory_manager.cycle_hotbar_row()
 
 func get_effective_move_speed() -> float:
 	if energy_manager != null and energy_manager.is_exhausted:
@@ -234,7 +256,54 @@ func get_active_tool_name() -> String:
 			return "Hand / Harvest"
 	return "None"
 
+func get_selected_item_id() -> StringName:
+	if inventory_manager != null:
+		return inventory_manager.get_selected_item_id()
+	match active_tool:
+		ToolType.HOE:
+			return &"vanilla:hoe"
+		ToolType.WATERING_CAN:
+			return &"vanilla:watering_can"
+		ToolType.PARSNIP_SEEDS:
+			return &"vanilla:472"
+		_:
+			return &""
+
 func use_active_tool() -> bool:
+	var cell: Vector2i = target_cell
+	var cur_loc: StringName = location_manager.current_location_id if location_manager != null else &"Farm"
+
+	# 1. Check for chest interactions first (open or pickup)
+	if chest_manager != null and chest_manager.has_chest_at(cur_loc, cell):
+		var active_id: StringName = get_selected_item_id()
+		if active_id == &"vanilla:axe" or active_id == &"vanilla:pickaxe":
+			if energy_manager != null and not energy_manager.can_use_tool():
+				print("[Player] Too exhausted to swing tool!")
+				return false
+			if energy_manager != null:
+				energy_manager.consume_tool_energy(active_id)
+			_start_tool_animation(active_id)
+			return chest_manager.try_pickup_chest(cur_loc, cell, inventory_manager)
+		else:
+			var chest: Chest = chest_manager.get_chest_at(cur_loc, cell)
+			if chest != null and chest_ui != null:
+				chest_ui.open_chest(chest, inventory_manager)
+				return true
+
+	# 2. Check for placing a chest
+	var selected_id: StringName = get_selected_item_id()
+	if selected_id == &"vanilla:chest" or selected_id == &"vanilla:130":
+		var active_loader: MapLoader = location_manager.get_current_map_loader() if location_manager != null else map_loader
+		if chest_manager != null and chest_manager.can_place_chest(cur_loc, cell, active_loader, farm_grid, crop_manager):
+			chest_manager.place_chest(cur_loc, cell)
+			if inventory_manager != null:
+				inventory_manager.remove_item_at(inventory_manager.selected_slot_index, 1)
+			return true
+		else:
+			print("[Player] Cannot place chest at %s!" % str(cell))
+			return false
+
+	# 3. Location and FarmGrid restrictions for farming actions
 	if farm_grid == null or not farm_grid.visible:
 		return false
 	if location_manager != null and location_manager.current_location_id != &"Farm":
@@ -243,9 +312,7 @@ func use_active_tool() -> bool:
 		print("[Player] Cannot use tool: completely exhausted / passed out!")
 		return false
 
-	var cell: Vector2i = target_cell
-
-	# 1. Check for mature harvest first
+	# 4. Check for mature harvest first
 	if crop_manager != null and crop_manager.is_mature(cell):
 		var harvest_res: Dictionary = crop_manager.harvest_crop(cell)
 		if harvest_res.get("success", false):
@@ -255,7 +322,7 @@ func use_active_tool() -> bool:
 			print("[Player] Harvested: %s x%d! Total in bag: %d" % [item_id, count, harvest_bag[item_id]])
 			return true
 
-	# 2. Use item from inventory if available
+	# 5. Use item from inventory if available
 	if inventory_manager != null:
 		var slot: InventorySlot = inventory_manager.get_selected_slot()
 		if slot == null or slot.is_empty():

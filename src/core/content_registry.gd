@@ -11,6 +11,7 @@ var _items: Dictionary[StringName, ItemData] = {}
 var _crops: Dictionary[StringName, CropData] = {}
 var _springobjects_texture: Texture2D = null
 var _tools_texture: Texture2D = null
+var _craftables_texture: Texture2D = null
 var _icon_cache: Dictionary[StringName, AtlasTexture] = {}
 
 func _ready() -> void:
@@ -70,6 +71,16 @@ func get_tools_texture() -> Texture2D:
 				_tools_texture = ImageTexture.create_from_image(img)
 	return _tools_texture
 
+func get_craftables_texture() -> Texture2D:
+	if _craftables_texture == null:
+		var path: String = VANILLA_DATA_DIR.path_join("TileSheets/Craftables.png")
+		if FileAccess.file_exists(path):
+			var abs_path: String = ProjectSettings.globalize_path(path)
+			var img: Image = Image.load_from_file(abs_path)
+			if img != null and not img.is_empty():
+				_craftables_texture = ImageTexture.create_from_image(img)
+	return _craftables_texture
+
 func get_item_icon(id: StringName) -> AtlasTexture:
 	var namespaced_id: StringName = ensure_namespaced(id)
 	if _icon_cache.has(namespaced_id):
@@ -79,16 +90,36 @@ func get_item_icon(id: StringName) -> AtlasTexture:
 	if item == null:
 		return null
 
+	var is_craftable: bool = item.texture_path.to_lower().contains("craftable")
 	var is_tool: bool = item.category == ItemData.Category.TOOL or item.texture_path.contains("tools")
-	var base_tex: Texture2D = get_tools_texture() if is_tool else get_springobjects_texture()
+	var base_tex: Texture2D = null
+	var cols: int = 24
+	var cell_w: int = 16
+	var cell_h: int = 16
+
+	if is_craftable:
+		base_tex = get_craftables_texture()
+		cols = 8
+		cell_w = 16
+		cell_h = 32
+	elif is_tool:
+		base_tex = get_tools_texture()
+		cols = 21
+		cell_w = 16
+		cell_h = 16
+	else:
+		base_tex = get_springobjects_texture()
+		cols = 24
+		cell_w = 16
+		cell_h = 16
+
 	if base_tex == null:
 		return null
 
-	var cols: int = 21 if is_tool else 24
 	var idx: int = item.sprite_index if item.sprite_index >= 0 else 0
 	var atlas: AtlasTexture = AtlasTexture.new()
 	atlas.atlas = base_tex
-	atlas.region = Rect2((idx % cols) * 16, (idx / cols) * 16, 16, 16)
+	atlas.region = Rect2((idx % cols) * cell_w, (idx / cols) * cell_h, cell_w, cell_h)
 	atlas.filter_clip = true
 
 	_icon_cache[namespaced_id] = atlas
@@ -208,6 +239,15 @@ func register_default_tools() -> void:
 			"texture_path": "TileSheets/tools.png",
 			"sprite_index": 47,
 			"max_stack": 1,
+		},
+		{
+			"id": "chest",
+			"name": "Chest",
+			"description": "A place to store your items.",
+			"category": int(ItemData.Category.CRAFTING),
+			"texture_path": "TileSheets/Craftables.png",
+			"sprite_index": 130,
+			"max_stack": 999,
 		},
 	]
 	for d: Dictionary in tools_def:

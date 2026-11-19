@@ -21,6 +21,11 @@ signal soil_tilled(cell: Vector2i)
 signal item_used(item_id: StringName, target_position: Vector2)
 signal item_selected(slot_index: int, item_id: StringName)
 signal inventory_changed(slot_index: int, item_id: StringName, count: int)
+signal inventory_capacity_changed(new_capacity: int)
+signal chest_opened(chest: Node)
+signal chest_closed(chest: Node)
+signal chest_placed(cell: Vector2i, chest: Node)
+signal chest_removed(cell: Vector2i)
 
 # Player Status & Economy
 signal player_energy_changed(new_energy: float, max_energy: float)

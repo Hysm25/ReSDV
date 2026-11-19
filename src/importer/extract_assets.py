@@ -838,6 +838,7 @@ def main() -> int:
         "Strings/Objects.xnb",
         "TileSheets/crops.xnb",
         "TileSheets/tools.xnb",
+        "TileSheets/Craftables.xnb",
         "Maps/springobjects.xnb",
         # Maps & Tilesheets
         "Maps/Farm.xnb",
@@ -904,6 +905,7 @@ def main() -> int:
     # Step 7: Extract Textures
     extract_texture(dec_files["TileSheets/crops.xnb"], os.path.join(output_dir, "TileSheets/crops.png"))
     extract_texture(dec_files["TileSheets/tools.xnb"], os.path.join(output_dir, "TileSheets/tools.png"))
+    extract_texture(dec_files["TileSheets/Craftables.xnb"], os.path.join(output_dir, "TileSheets/Craftables.png"))
     extract_texture(dec_files["Maps/springobjects.xnb"], os.path.join(output_dir, "Maps/springobjects.png"))
     extract_texture(dec_files["Maps/spring_outdoorsTileSheet.xnb"], os.path.join(output_dir, "Maps/spring_outdoorsTileSheet.png"))
     extract_texture(dec_files["Maps/spring_outdoorsTileSheet2.xnb"], os.path.join(output_dir, "Maps/spring_outdoorsTileSheet2.png"))

@@ -75,4 +75,13 @@ updated: 2026-11-19
   - Integrated with `Player` (`src/entities/player/player.gd`): halved movement speed (110.0 -> 55.0) when exhausted, tool usage animation lock (0.22s) with directional lean, swinging tool rendering via `ContentRegistry.get_item_icon`, swing swoosh arcs, particle effects, sweat drops when exhausted, and edible item consumption via `E` key or right-click.
   - Extended `HUD` (`src/ui/hud.tscn`, `src/ui/hud.gd`) with vertical stamina bar showing current/max energy, dynamic color gradients (green -> yellow -> orange -> red), and "TIRED!" exhaustion status indicator.
   - Verified with automated test suite `tests/test_energy.tscn` and full regression test suite.
-- Next immediate task: Implement inventory expansion / chest container storage.
+- Inventory Expansion (Backpack Upgrades) & Chest Container Storage implemented & verified:
+  - Extended `InventoryManager` (`src/systems/inventory/inventory_manager.gd`) with backpack capacity upgrading (12 -> 24 -> 36 slots), hotbar slot selection clamping to 12 slots, and cyclic hotbar row rotation via `Tab` key.
+  - Extended extractor pipeline (`src/importer/extract_assets.py`) to extract `TileSheets/Craftables.png` (128x1472), and updated `ContentRegistry` to load BigCraftables icons and register default `vanilla:chest` item (BigCraftable 130).
+  - Built `ItemContainer` (`src/systems/inventory/item_container.gd`) data model with 36 slots, organization sorting, slot swapping, and serialization (`to_dict` / `from_dict`).
+  - Built physical `Chest` world entity (`src/entities/objects/chest.gd`) with collision shape, authentic closed/open sprite frames (130 / 135) from `Craftables.png`, and tool shake effect when occupied.
+  - Built `ChestManager` (`src/systems/world/chest_manager.gd`) managing chest lifecycle, cross-location visibility and collision persistence (`Farm` vs `FarmHouse`), obstacle validation, and axe/pickaxe pickup of empty chests.
+  - Built full modal `ChestUI` (`src/ui/chest_ui.tscn`, `src/ui/container_slot_ui.gd`) rendering 36 container slots alongside player inventory, supporting full stack transfers (left click) and single item transfers (right click), organize sorting, and `Esc` / `E` dismiss.
+  - Connected `AudioManager` to play authentic SFX: `openBox` when opening, `doorClose` when closing, `woodyStep` when placed, and `axchop` when picked up.
+  - Verified with automated test suite `tests/test_chest.tscn` and full engine regression test suite.
+- Next immediate task: Implement NPC movement schedules and dialogue engine. (Fallback: `~/.ai-context/MEMORY.md`)
