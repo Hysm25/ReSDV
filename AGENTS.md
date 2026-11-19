@@ -32,3 +32,4 @@ cargo test
 # Godot 4 (CLI / Headless check):
 godot --headless --path . --quit
 godot --path .
+```
